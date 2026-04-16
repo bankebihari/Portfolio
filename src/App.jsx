@@ -4,7 +4,7 @@ import Portfolio from "./pages/Portfolio";
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/calude-test">
       <Navbar />
       <Routes>
         <Route path="/" element={<Portfolio />} />
