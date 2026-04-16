@@ -239,45 +239,24 @@ export default function Portfolio() {
             <div className="hero-btns">
               <a href="#projects" className="btn btn-primary">View My Projects</a>
               <a href="#contact" className="btn btn-outline">Contact Me</a>
+              {resume && (
+                <button className="btn btn-ghost" onClick={downloadResume}>⬇ Resume</button>
+              )}
             </div>
             <div className="hero-socials">
               <a href="https://github.com/bankebihari" target="_blank" rel="noreferrer" className="social-chip">GitHub</a>
               <a href="https://www.linkedin.com/in/bankebihari01/" target="_blank" rel="noreferrer" className="social-chip">LinkedIn</a>
             </div>
           </div>
-          {/* RIGHT — resume preview */}
+          {/* RIGHT — coding GIF */}
           <div className="hero-right">
-            <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx" onChange={handleUpload} style={{ display: "none" }} />
-            <div className="resume-preview-card glass">
-              {resume ? (
-                <>
-                  {resume.isPdf ? (
-                    <iframe src={resume.dataUrl} className="resume-iframe" title="Resume Preview" />
-                  ) : (
-                    <div className="resume-placeholder">
-                      <span className="resume-ph-icon">📋</span>
-                      <p className="resume-ph-name">{resume.name}</p>
-                      <p className="resume-ph-sub">{resume.size}</p>
-                    </div>
-                  )}
-                  <div className="resume-preview-bar">
-                    <span className="resume-ph-name" style={{ fontSize: "0.78rem", maxWidth: "140px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{resume.name}</span>
-                    <div style={{ display: "flex", gap: "0.5rem" }}>
-                      <button className="btn btn-primary btn-sm" onClick={downloadResume}>⬇</button>
-                      <button className="btn btn-ghost btn-sm" onClick={() => fileInputRef.current?.click()}>🔄</button>
-                      <button className="btn btn-danger btn-sm" onClick={deleteResume}>🗑</button>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div className="resume-drop" onClick={() => fileInputRef.current?.click()}>
-                  <div className="upload-icon-wrap"><span className="upload-icon">📄</span><div className="upload-ring" /></div>
-                  <p className="resume-drop-title">Upload Your Resume</p>
-                  <p className="resume-drop-sub">PDF, DOC, DOCX · Click to browse</p>
-                  {uploading && <span className="spinner" style={{ margin: "0 auto" }} />}
-                  {uploadError && <p className="form-error">{uploadError}</p>}
-                </div>
-              )}
+            <div className="hero-gif-wrap">
+              <img
+                src="https://cdn.dribbble.com/users/926537/screenshots/4502924/python-2.gif"
+                alt="Coding animation"
+                className="hero-gif"
+              />
+              <div className="hero-gif-glow" />
             </div>
           </div>
         </div>
@@ -289,13 +268,18 @@ export default function Portfolio() {
         <div className="container">
           <div className="sec-header">
             <span className="sec-badge">About Me</span>
-            <h2 className="sec-title">Who I Am</h2>
-            <p className="sec-sub">A little about my journey and values</p>
+            <h2 className="sec-title">💫 About Me</h2>
+            <p className="sec-sub">A passionate Web developer</p>
           </div>
-          <div className="about-grid">
-            <div className="about-card glass"><div className="about-icon">🎯</div><h3>Mission</h3><p>Building impactful digital products that solve real-world problems with elegant, scalable solutions.</p></div>
-            <div className="about-card glass"><div className="about-icon">💡</div><h3>Approach</h3><p>I combine creativity with technical expertise to deliver exceptional, user-centered experiences.</p></div>
-            <div className="about-card glass"><div className="about-icon">🚀</div><h3>Goals</h3><p>Continuously learning, growing, and pushing boundaries — one project at a time.</p></div>
+          <div className="about-readme glass">
+            <ul className="readme-list">
+              <li><span className="readme-icon">🔭</span> I&apos;m skilled in <strong>React.js</strong> and <strong>Flask</strong> web projects</li>
+              <li><span className="readme-icon">🌱</span> I&apos;m skilled in <strong>MERN Stack</strong>, <strong>WordPress</strong></li>
+              <li><span className="readme-icon">👯</span> I&apos;m looking to collaborate on <strong>Everything</strong></li>
+              <li><span className="readme-icon">💬</span> Ask me about <strong>AWS, Python, Java, C++, HTML, CSS, Flask, React.js, Node.js, Express.js</strong></li>
+              <li><span className="readme-icon">📫</span> How to reach me: <a href="mailto:bankebihari1206@gmail.com" className="readme-email">bankebihari1206@gmail.com</a></li>
+              <li><span className="readme-icon">⚡</span> Fun fact: I think I am Funny 😄</li>
+            </ul>
           </div>
         </div>
       </section>
@@ -427,6 +411,47 @@ export default function Portfolio() {
               {!showSkillInput && <button className="btn btn-primary" onClick={openSkillInput}>+ Add Skill</button>}
               <span className="skills-count">{skills.length} skill{skills.length !== 1 ? "s" : ""}</span>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── RESUME ── */}
+      <section id="resume" className="section resume-sec">
+        <div className="container">
+          <div className="sec-header">
+            <span className="sec-badge">Resume</span>
+            <h2 className="sec-title">My Resume</h2>
+            <p className="sec-sub">Upload &amp; download your resume</p>
+          </div>
+          <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx" onChange={handleUpload} style={{ display: "none" }} />
+          <div className="resume-compact glass">
+            {resume ? (
+              <div className="resume-uploaded-row">
+                <span className="resume-ph-icon" style={{ fontSize: "2.2rem" }}>📋</span>
+                <div>
+                  <p className="resume-ph-name">{resume.name}</p>
+                  <p className="resume-ph-sub">{resume.size} · Uploaded {resume.uploadedAt}</p>
+                </div>
+                <div style={{ display: "flex", gap: "0.75rem", marginLeft: "auto" }}>
+                  <button className="btn btn-primary" onClick={downloadResume}>⬇ Download</button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => fileInputRef.current?.click()}>🔄 Replace</button>
+                  <button className="btn btn-danger btn-sm" onClick={deleteResume}>🗑</button>
+                </div>
+              </div>
+            ) : (
+              <div className="resume-upload-row">
+                <div className="upload-icon-wrap" style={{ width: 60, height: 60 }}><span style={{ fontSize: "2.2rem" }}>📄</span><div className="upload-ring" /></div>
+                <div>
+                  <p className="resume-ph-name">No resume uploaded yet</p>
+                  <p className="resume-ph-sub">PDF, DOC, DOCX supported</p>
+                  {uploadError && <p className="form-error">{uploadError}</p>}
+                </div>
+                <button className="btn btn-primary" style={{ marginLeft: "auto" }}
+                  onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+                  {uploading ? <><span className="spinner" /> Uploading…</> : "📤 Upload Resume"}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </section>
