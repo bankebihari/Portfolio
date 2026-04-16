@@ -44,13 +44,27 @@ const DEFAULT_EXPERIENCES = [
 const DEFAULT_PROJECTS = [
   {
     id: 1,
+    name: "DietWell",
+    description: "Role-based diet management app with AI-powered diet plans.",
+    link: "https://dietwell-pz1z.onrender.com",
+    tags: ["React", "Tailwind CSS", "Flask", "MongoDB", "GitHub Actions"],
+  },
+  {
+    id: 2,
+    name: "LearnHub",
+    description: "E-learning platform with authentication, payments, and admin dashboard.",
+    link: "https://rainbow-quokka-10f671.netlify.app",
+    tags: ["React", "Node.js", "Payments", "Admin"],
+  },
+  {
+    id: 3,
     name: "Portfolio Website",
     description: "Personal portfolio built with React and deployed on Vercel. Features dark theme, editable sections, and resume upload.",
     link: "https://react-blog-three-iota.vercel.app",
     tags: ["React", "CSS", "Vercel"],
   },
   {
-    id: 2,
+    id: 4,
     name: "Blog Platform",
     description: "A two-page React blog with post listing and detail views, built with React Router and Vite.",
     link: "https://github.com/bankebihari/calude-test",
@@ -117,11 +131,26 @@ export default function Portfolio() {
 
   /* ── Projects ── */
   const [projects, setProjects] = useState(() => {
-    try { const p = localStorage.getItem("pf_proj_v1"); return p ? JSON.parse(p) : DEFAULT_PROJECTS; } catch { return DEFAULT_PROJECTS; }
+    try { const p = localStorage.getItem("pf_proj_v2"); return p ? JSON.parse(p) : DEFAULT_PROJECTS; } catch { return DEFAULT_PROJECTS; }
   });
   const [projForm, setProjForm] = useState(null);
+  const dragItem = useRef(null);
+  const dragOver = useRef(null);
 
-  useEffect(() => { localStorage.setItem("pf_proj_v1", JSON.stringify(projects)); }, [projects]);
+  useEffect(() => { localStorage.setItem("pf_proj_v2", JSON.stringify(projects)); }, [projects]);
+
+  const onDragStart = (i) => { dragItem.current = i; };
+  const onDragEnter = (i) => { dragOver.current = i; };
+  const onDragEnd = () => {
+    const from = dragItem.current;
+    const to = dragOver.current;
+    if (from === null || to === null || from === to) { dragItem.current = null; dragOver.current = null; return; }
+    const reordered = [...projects];
+    const [moved] = reordered.splice(from, 1);
+    reordered.splice(to, 0, moved);
+    setProjects(reordered);
+    dragItem.current = null; dragOver.current = null;
+  };
 
   const saveProj = () => {
     const { name: n, description } = projForm.data;
@@ -340,10 +369,20 @@ export default function Portfolio() {
             <h2 className="sec-title">What I&apos;ve Built</h2>
             <p className="sec-sub">A selection of my recent work</p>
           </div>
+          <p className="drag-hint">⠿ Drag cards to reorder</p>
           <div className="projects-grid">
-            {projects.map((proj) => (
-              <div key={proj.id} className="proj-card glass">
+            {projects.map((proj, i) => (
+              <div
+                key={proj.id}
+                className="proj-card glass"
+                draggable
+                onDragStart={() => onDragStart(i)}
+                onDragEnter={() => onDragEnter(i)}
+                onDragEnd={onDragEnd}
+                onDragOver={(e) => e.preventDefault()}
+              >
                 <div className="proj-top">
+                  <div className="proj-drag-handle" title="Drag to reorder">⠿</div>
                   <h3 className="proj-name">{proj.name}</h3>
                   <div className="exp-actions">
                     <button className="icon-btn" title="Edit" onClick={() => setProjForm({ mode: "edit", id: proj.id, data: { ...proj, tags: proj.tags.join(", ") } })}>✎</button>

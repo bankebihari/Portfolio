@@ -568,11 +568,35 @@
   transform: translateY(-4px);
 }
 
+.drag-hint {
+  font-size: 0.78rem;
+  color: #475569;
+  margin-bottom: 1rem;
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+
+.proj-card {
+  cursor: grab;
+}
+.proj-card:active { cursor: grabbing; }
+.proj-card[draggable]:hover { border-color: rgba(124,58,237,0.4); }
+
+.proj-drag-handle {
+  font-size: 1.1rem;
+  color: #475569;
+  cursor: grab;
+  padding: 0 4px 0 0;
+  user-select: none;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
 .proj-top {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 1rem;
+  gap: 0.5rem;
 }
 
 .proj-name {
