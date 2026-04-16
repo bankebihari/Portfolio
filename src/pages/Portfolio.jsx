@@ -78,6 +78,31 @@ export default function Portfolio() {
   const requireAuth = (action) => setAuthModal({ onConfirm: () => { setAuthModal(null); action(); } });
   const closeAuth = () => setAuthModal(null);
 
+  /* ── About points ── */
+  const DEFAULT_ABOUT = [
+    { icon: "🔭", text: "I'm skilled in <strong>React.js</strong> and <strong>Flask</strong> web projects" },
+    { icon: "🌱", text: "I'm skilled in <strong>MERN Stack</strong>, <strong>WordPress</strong>" },
+    { icon: "👯", text: "I'm looking to collaborate on <strong>Everything</strong>" },
+    { icon: "💬", text: "Ask me about <strong>AWS, Python, Java, C++, HTML, CSS, Flask, React.js, Node.js, Express.js</strong>" },
+    { icon: "📫", text: 'How to reach me: <a href="mailto:bankebihari1206@gmail.com" class="readme-email">bankebihari1206@gmail.com</a>' },
+    { icon: "⚡", text: "Fun fact: I think I am Funny 😄" },
+  ];
+  const [aboutPoints, setAboutPoints] = useState(() => {
+    try { const a = localStorage.getItem("pf_about_v1"); return a ? JSON.parse(a) : DEFAULT_ABOUT; } catch { return DEFAULT_ABOUT; }
+  });
+  const [showAboutInput, setShowAboutInput] = useState(false);
+  const [newPoint, setNewPoint] = useState({ icon: "✨", text: "" });
+
+  useEffect(() => { localStorage.setItem("pf_about_v1", JSON.stringify(aboutPoints)); }, [aboutPoints]);
+
+  const deleteAboutPoint = (i) => setAboutPoints(aboutPoints.filter((_, idx) => idx !== i));
+  const saveAboutPoint = () => {
+    if (!newPoint.text.trim()) return;
+    setAboutPoints([...aboutPoints, newPoint]);
+    setShowAboutInput(false);
+    setNewPoint({ icon: "✨", text: "" });
+  };
+
   /* ── Skills ── */
   const [skills, setSkills] = useState(() => {
     try { const s = localStorage.getItem("pf_skills_v2"); return s ? JSON.parse(s) : DEFAULT_SKILLS; } catch { return DEFAULT_SKILLS; }
@@ -273,13 +298,31 @@ export default function Portfolio() {
           </div>
           <div className="about-readme glass">
             <ul className="readme-list">
-              <li><span className="readme-icon">🔭</span> I&apos;m skilled in <strong>React.js</strong> and <strong>Flask</strong> web projects</li>
-              <li><span className="readme-icon">🌱</span> I&apos;m skilled in <strong>MERN Stack</strong>, <strong>WordPress</strong></li>
-              <li><span className="readme-icon">👯</span> I&apos;m looking to collaborate on <strong>Everything</strong></li>
-              <li><span className="readme-icon">💬</span> Ask me about <strong>AWS, Python, Java, C++, HTML, CSS, Flask, React.js, Node.js, Express.js</strong></li>
-              <li><span className="readme-icon">📫</span> How to reach me: <a href="mailto:bankebihari1206@gmail.com" className="readme-email">bankebihari1206@gmail.com</a></li>
-              <li><span className="readme-icon">⚡</span> Fun fact: I think I am Funny 😄</li>
+              {aboutPoints.map((pt, i) => (
+                <li key={i}>
+                  <span className="readme-icon">{pt.icon}</span>
+                  <span dangerouslySetInnerHTML={{ __html: pt.text }} />
+                  <button className="readme-del" onClick={() => requireAuth(() => deleteAboutPoint(i))} title="Remove (requires login)">✕</button>
+                </li>
+              ))}
             </ul>
+            {showAboutInput ? (
+              <div className="about-add-row">
+                <input className="text-input about-icon-input" placeholder="emoji" maxLength={4}
+                  value={newPoint.icon} onChange={(e) => setNewPoint({ ...newPoint, icon: e.target.value })} />
+                <input className="text-input" style={{ flex: 1 }} placeholder="Point text…"
+                  value={newPoint.text}
+                  onChange={(e) => setNewPoint({ ...newPoint, text: e.target.value })}
+                  onKeyDown={(e) => { if (e.key === "Enter") saveAboutPoint(); if (e.key === "Escape") setShowAboutInput(false); }} />
+                <button className="btn btn-primary btn-sm" onClick={saveAboutPoint}>Add</button>
+                <button className="btn btn-ghost btn-sm" onClick={() => setShowAboutInput(false)}>Cancel</button>
+              </div>
+            ) : (
+              <button className="btn btn-outline add-btn" style={{ marginTop: "1.25rem" }}
+                onClick={() => requireAuth(() => { setShowAboutInput(true); setNewPoint({ icon: "✨", text: "" }); })}>
+                + Add Point
+              </button>
+            )}
           </div>
         </div>
       </section>
@@ -434,7 +477,7 @@ export default function Portfolio() {
                 </div>
                 <div style={{ display: "flex", gap: "0.75rem", marginLeft: "auto" }}>
                   <button className="btn btn-primary" onClick={downloadResume}>⬇ Download</button>
-                  <button className="btn btn-ghost btn-sm" onClick={() => fileInputRef.current?.click()}>🔄 Replace</button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => requireAuth(() => fileInputRef.current?.click())}>🔄 Replace</button>
                   <button className="btn btn-danger btn-sm" onClick={deleteResume}>🗑</button>
                 </div>
               </div>

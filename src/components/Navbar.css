@@ -29,19 +29,18 @@
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   font-weight: 800;
   color: #f1f5f9;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.3px;
   transition: opacity 0.2s;
+  background: linear-gradient(135deg, #a78bfa, #06b6d4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .nav-logo:hover { opacity: 0.8; }
-
-.logo-bracket {
-  color: #7c3aed;
-  font-weight: 900;
-}
 
 .nav-links {
   display: flex;

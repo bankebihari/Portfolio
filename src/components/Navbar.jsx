@@ -22,9 +22,7 @@ export default function Navbar() {
     <nav className={`navbar ${scrolled ? "navbar--scrolled" : ""}`}>
       <div className="nav-inner">
         <button className="nav-logo" onClick={() => scrollTo("home")}>
-          <span className="logo-bracket">&lt;</span>
-          Portfolio
-          <span className="logo-bracket">/&gt;</span>
+          💫 Banke Bihari
         </button>
 
         <ul className={`nav-links ${menuOpen ? "nav-links--open" : ""}`}>
