@@ -947,6 +947,65 @@
   gap: 0.85rem;
 }
 
+.contact-form-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.call-us-block {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(124,58,237,0.12);
+  border: 1px solid rgba(124,58,237,0.3);
+  border-radius: 100px;
+  padding: 5px 14px;
+}
+
+.call-us-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #a78bfa;
+  white-space: nowrap;
+}
+
+.call-us-number {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: color 0.2s;
+}
+.call-us-number:hover { color: #a78bfa; }
+
+.phone-edit-icon {
+  font-size: 0.7rem;
+  opacity: 0;
+  color: #7c3aed;
+  transition: opacity 0.2s;
+}
+.call-us-number:hover .phone-edit-icon { opacity: 1; }
+
+.phone-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #7c3aed;
+  color: #f1f5f9;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: inherit;
+  outline: none;
+  width: 140px;
+  padding: 2px 4px;
+}
+
 .form-row-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -957,14 +1016,76 @@
   min-height: 130px !important;
 }
 
+/* ════════════════════ AUTH MODAL ════════════════════ */
+.auth-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(6px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeDown 0.2s ease both;
+}
+
+.auth-modal {
+  width: 100%;
+  max-width: 380px;
+  padding: 2.25rem;
+  border-radius: 20px;
+  animation: fadeUp 0.25s ease both;
+}
+
+.auth-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #e2e8f0;
+  margin-bottom: 0.4rem;
+}
+
+.auth-sub {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-bottom: 1.5rem;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
 /* ════════════════════ FOOTER ════════════════════ */
 .footer {
-  text-align: center;
-  padding: 2rem;
+  padding: 1.75rem 2rem;
   color: #334155;
   font-size: 0.875rem;
   border-top: 1px solid rgba(255,255,255,0.05);
 }
+
+.footer-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.footer-gh {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #64748b;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.footer-gh:hover { color: #a78bfa; }
+
 .heart { color: #f87171; }
 
 /* ════════════════════ ANIMATIONS ════════════════════ */

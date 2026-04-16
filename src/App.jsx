@@ -4,7 +4,7 @@ import Portfolio from "./pages/Portfolio";
 
 export default function App() {
   return (
-    <BrowserRouter basename="/calude-test">
+    <BrowserRouter basename={import.meta.env.PROD ? "/Portfolio" : "/calude-test"}>
       <Navbar />
       <Routes>
         <Route path="/" element={<Portfolio />} />
