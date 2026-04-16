@@ -1,15 +1,13 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
-import Home from "./pages/Home";
-import Post from "./pages/Post";
+import Portfolio from "./pages/Portfolio";
 
 export default function App() {
   return (
     <BrowserRouter>
       <Navbar />
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/post/:id" element={<Post />} />
+        <Route path="/" element={<Portfolio />} />
       </Routes>
     </BrowserRouter>
   );
