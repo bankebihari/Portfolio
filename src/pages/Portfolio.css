@@ -191,12 +191,96 @@
   50%       { opacity: 0.28; transform: translate(-50%, -50%) scale(1.25); }
 }
 
-.hero-content {
+/* Two-column hero layout */
+.hero-inner {
   position: relative;
   z-index: 1;
-  text-align: center;
-  max-width: 720px;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: center;
 }
+
+.hero-left {
+  text-align: left;
+}
+
+.hero-right {
+  display: flex;
+  justify-content: center;
+}
+
+/* Resume preview card in hero */
+.resume-preview-card {
+  width: 100%;
+  max-width: 420px;
+  height: 500px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 20px;
+}
+
+.resume-iframe {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: #fff;
+}
+
+.resume-preview-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: rgba(255,255,255,0.04);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  gap: 0.5rem;
+}
+
+.resume-drop {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  padding: 2rem;
+  transition: background 0.2s;
+}
+
+.resume-drop:hover {
+  background: rgba(124,58,237,0.06);
+}
+
+.resume-drop-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.resume-drop-sub {
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.resume-placeholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: rgba(255,255,255,0.03);
+}
+
+.resume-ph-icon { font-size: 3rem; }
+.resume-ph-name { font-size: 0.9rem; font-weight: 600; color: #e2e8f0; }
+.resume-ph-sub  { font-size: 0.8rem; color: #64748b; }
 
 .hero-badge {
   display: inline-flex;
@@ -296,7 +380,6 @@
 .hero-btns {
   display: flex;
   gap: 1rem;
-  justify-content: center;
   flex-wrap: wrap;
   margin-bottom: 2rem;
   animation: fadeUp 0.65s ease 0.4s both;
@@ -305,7 +388,6 @@
 .hero-socials {
   display: flex;
   gap: 0.75rem;
-  justify-content: center;
   flex-wrap: wrap;
   animation: fadeUp 0.65s ease 0.5s both;
 }
@@ -799,9 +881,16 @@
   border-top: 1px solid rgba(255,255,255,0.05);
 }
 
-.contact-grid {
+.contact-layout {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: 1fr 1.4fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.contact-info {
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
 }
 
@@ -809,11 +898,12 @@
   display: flex;
   align-items: center;
   gap: 1.1rem;
-  padding: 1.6rem;
+  padding: 1.4rem 1.6rem;
+  text-decoration: none;
   transition: all 0.3s ease;
 }
 .contact-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-3px);
   border-color: rgba(124,58,237,0.5);
 }
 .contact-card strong {
@@ -822,8 +912,26 @@
   font-weight: 700;
   margin-bottom: 0.2rem;
 }
-.contact-card p { color: #64748b; font-size: 0.875rem; }
+.contact-card p { color: #64748b; font-size: 0.85rem; margin: 0; }
 .contact-icon { font-size: 1.8rem; flex-shrink: 0; }
+
+/* Contact form */
+.contact-form {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.contact-textarea {
+  min-height: 130px !important;
+}
 
 /* ════════════════════ FOOTER ════════════════════ */
 .footer {
@@ -847,6 +955,17 @@
 }
 
 /* ════════════════════ RESPONSIVE ════════════════════ */
+@media (max-width: 900px) {
+  .hero-inner {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+  .hero-left { text-align: center; }
+  .hero-btns, .hero-socials { justify-content: center; }
+  .hero-right { display: none; }
+  .contact-layout { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 768px) {
   .section { padding: 80px 0; }
   .hero { padding: 110px 1.5rem 4rem; }
@@ -854,6 +973,7 @@
   .resume-uploaded { flex-direction: column; }
   .resume-actions { width: 100%; }
   .resume-actions .btn { flex: 1; }
+  .form-row-2 { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 480px) {

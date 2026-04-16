@@ -99,7 +99,7 @@ export default function Portfolio() {
   const [experiences, setExperiences] = useState(() => {
     try { const e = localStorage.getItem("pf_exp_v1"); return e ? JSON.parse(e) : DEFAULT_EXPERIENCES; } catch { return DEFAULT_EXPERIENCES; }
   });
-  const [expForm, setExpForm] = useState(null); // null | { mode:'add'|'edit', data, id? }
+  const [expForm, setExpForm] = useState(null);
 
   useEffect(() => { localStorage.setItem("pf_exp_v1", JSON.stringify(experiences)); }, [experiences]);
 
@@ -119,7 +119,7 @@ export default function Portfolio() {
   const [projects, setProjects] = useState(() => {
     try { const p = localStorage.getItem("pf_proj_v1"); return p ? JSON.parse(p) : DEFAULT_PROJECTS; } catch { return DEFAULT_PROJECTS; }
   });
-  const [projForm, setProjForm] = useState(null); // null | { mode, data, id? }
+  const [projForm, setProjForm] = useState(null);
 
   useEffect(() => { localStorage.setItem("pf_proj_v1", JSON.stringify(projects)); }, [projects]);
 
@@ -158,6 +158,7 @@ export default function Portfolio() {
         size: file.size > 1024 * 1024 ? (file.size / (1024 * 1024)).toFixed(2) + " MB" : (file.size / 1024).toFixed(1) + " KB",
         uploadedAt: new Date().toLocaleDateString(),
         dataUrl: ev.target.result,
+        isPdf: file.type === "application/pdf",
       };
       try { localStorage.setItem("pf_resume_v2", JSON.stringify(data)); setResume(data); }
       catch { setUploadError("File too large to store. Try a smaller file."); }
@@ -169,44 +170,104 @@ export default function Portfolio() {
   };
 
   const downloadResume = () => { const a = document.createElement("a"); a.href = resume.dataUrl; a.download = resume.name; a.click(); };
-  const viewResume = () => { const w = window.open("", "_blank"); if (w) w.document.write(`<html><body style="margin:0"><iframe src="${resume.dataUrl}" width="100%" height="100%" frameborder="0"></iframe></body></html>`); };
   const deleteResume = () => { setResume(null); localStorage.removeItem("pf_resume_v2"); };
+
+  /* ── Contact form ── */
+  const [contactForm, setContactForm] = useState({ name: "", email: "", subject: "", message: "" });
+  const [contactSent, setContactSent] = useState(false);
+
+  const handleContact = (e) => {
+    e.preventDefault();
+    // Opens default mail client with pre-filled data
+    const { name: cn, email, subject, message } = contactForm;
+    const body = encodeURIComponent(`Name: ${cn}\nEmail: ${email}\n\n${message}`);
+    const sub = encodeURIComponent(subject || `Portfolio contact from ${cn}`);
+    window.location.href = `mailto:bankebihari1206@gmail.com?subject=${sub}&body=${body}`;
+    setContactSent(true);
+    setTimeout(() => setContactSent(false), 4000);
+  };
 
   return (
     <div className="pf">
-      {/* ── HERO ── */}
+
+      {/* ── HERO (two-column) ── */}
       <section id="home" className="hero">
         <div className="hero-bg">
           <div className="orb orb-1" /><div className="orb orb-2" /><div className="orb orb-3" />
           <div className="hero-grid" />
         </div>
-        <div className="hero-content">
-          <div className="hero-badge"><span className="badge-dot" />Available for opportunities</div>
-          <h1 className="hero-name">
-            Hi, I&apos;m{" "}
-            {editingName ? (
-              <span className="name-edit-wrap">
-                <input ref={nameInputRef} className="name-input" value={nameInput}
-                  onChange={(e) => setNameInput(e.target.value)} onBlur={saveName}
-                  onKeyDown={(e) => { if (e.key === "Enter") saveName(); if (e.key === "Escape") cancelEditName(); }} />
-              </span>
-            ) : (
-              <span className="grad-text name-editable" onClick={startEditName} title="Click to edit your name">
-                {name}<span className="name-edit-icon">✎</span>
-              </span>
-            )}
-          </h1>
-          <h2 className="hero-role">Full Stack Developer</h2>
-          <p className="hero-bio">I craft beautiful, high-performance web experiences with modern technologies. Passionate about clean code, intuitive design, and building things that matter.</p>
-          <div className="hero-btns">
-            <a href="#projects" className="btn btn-primary">View My Projects</a>
-            <a href="#resume" className="btn btn-outline">My Resume</a>
+
+        <div className="hero-inner">
+          {/* LEFT — intro */}
+          <div className="hero-left">
+            <div className="hero-badge"><span className="badge-dot" />Available for opportunities</div>
+            <h1 className="hero-name">
+              Hi, I&apos;m{" "}
+              {editingName ? (
+                <span className="name-edit-wrap">
+                  <input ref={nameInputRef} className="name-input" value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)} onBlur={saveName}
+                    onKeyDown={(e) => { if (e.key === "Enter") saveName(); if (e.key === "Escape") cancelEditName(); }} />
+                </span>
+              ) : (
+                <span className="grad-text name-editable" onClick={startEditName} title="Click to edit your name">
+                  {name}<span className="name-edit-icon">✎</span>
+                </span>
+              )}
+            </h1>
+            <h2 className="hero-role">Full Stack Developer</h2>
+            <p className="hero-bio">I craft beautiful, high-performance web experiences with modern technologies. Passionate about clean code, intuitive design, and building things that matter.</p>
+            <div className="hero-btns">
+              <a href="#projects" className="btn btn-primary">View My Projects</a>
+              <a href="#contact" className="btn btn-outline">Contact Me</a>
+            </div>
+            <div className="hero-socials">
+              <a href="https://github.com/bankebihari" target="_blank" rel="noreferrer" className="social-chip">GitHub</a>
+              <a href="https://www.linkedin.com/in/bankebihari01/" target="_blank" rel="noreferrer" className="social-chip">LinkedIn</a>
+            </div>
           </div>
-          <div className="hero-socials">
-            <a href="https://github.com/bankebihari" target="_blank" rel="noreferrer" className="social-chip">GitHub</a>
-            <a href="https://www.linkedin.com/in/bankebihari01/" target="_blank" rel="noreferrer" className="social-chip">LinkedIn</a>
+
+          {/* RIGHT — resume preview */}
+          <div className="hero-right">
+            <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx" onChange={handleUpload} style={{ display: "none" }} />
+            <div className="resume-preview-card glass">
+              {resume ? (
+                <>
+                  {resume.isPdf ? (
+                    <iframe
+                      src={resume.dataUrl}
+                      className="resume-iframe"
+                      title="Resume Preview"
+                    />
+                  ) : (
+                    <div className="resume-placeholder">
+                      <span className="resume-ph-icon">📋</span>
+                      <p className="resume-ph-name">{resume.name}</p>
+                      <p className="resume-ph-sub">{resume.size}</p>
+                    </div>
+                  )}
+                  <div className="resume-preview-bar">
+                    <span className="resume-ph-name" style={{ fontSize: "0.78rem", maxWidth: "140px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{resume.name}</span>
+                    <div style={{ display: "flex", gap: "0.5rem" }}>
+                      <button className="btn btn-primary btn-sm" onClick={downloadResume}>⬇</button>
+                      <button className="btn btn-ghost btn-sm" onClick={() => fileInputRef.current?.click()}>🔄</button>
+                      <button className="btn btn-danger btn-sm" onClick={deleteResume}>🗑</button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="resume-drop" onClick={() => fileInputRef.current?.click()}>
+                  <div className="upload-icon-wrap"><span className="upload-icon">📄</span><div className="upload-ring" /></div>
+                  <p className="resume-drop-title">Upload Your Resume</p>
+                  <p className="resume-drop-sub">PDF, DOC, DOCX · Click to browse</p>
+                  {uploading && <><span className="spinner" style={{ margin: "0 auto" }} /> <p style={{ color: "#94a3b8", fontSize: "0.85rem" }}>Uploading…</p></>}
+                  {uploadError && <p className="form-error">{uploadError}</p>}
+                </div>
+              )}
+            </div>
           </div>
         </div>
+
         <div className="scroll-hint"><div className="scroll-line" /></div>
       </section>
 
@@ -234,7 +295,6 @@ export default function Portfolio() {
             <h2 className="sec-title">Where I&apos;ve Worked</h2>
             <p className="sec-sub">My professional journey</p>
           </div>
-
           <div className="exp-list">
             {experiences.map((exp) => (
               <div key={exp.id} className="exp-card glass">
@@ -252,19 +312,14 @@ export default function Portfolio() {
               </div>
             ))}
           </div>
-
           {expForm ? (
             <div className="form-card glass">
               <h3 className="form-title">{expForm.mode === "add" ? "Add Experience" : "Edit Experience"}</h3>
               <div className="form-grid">
-                <input className="text-input" placeholder="Job Title *" value={expForm.data.role}
-                  onChange={(e) => setExpForm({ ...expForm, data: { ...expForm.data, role: e.target.value } })} />
-                <input className="text-input" placeholder="Company *" value={expForm.data.company}
-                  onChange={(e) => setExpForm({ ...expForm, data: { ...expForm.data, company: e.target.value } })} />
-                <input className="text-input" placeholder="Duration e.g. Jan 2024 – Present *" value={expForm.data.duration}
-                  onChange={(e) => setExpForm({ ...expForm, data: { ...expForm.data, duration: e.target.value } })} />
-                <textarea className="text-input text-area" placeholder="Description (optional)" value={expForm.data.description}
-                  onChange={(e) => setExpForm({ ...expForm, data: { ...expForm.data, description: e.target.value } })} />
+                <input className="text-input" placeholder="Job Title *" value={expForm.data.role} onChange={(e) => setExpForm({ ...expForm, data: { ...expForm.data, role: e.target.value } })} />
+                <input className="text-input" placeholder="Company *" value={expForm.data.company} onChange={(e) => setExpForm({ ...expForm, data: { ...expForm.data, company: e.target.value } })} />
+                <input className="text-input" placeholder="Duration e.g. Jan 2024 – Present *" value={expForm.data.duration} onChange={(e) => setExpForm({ ...expForm, data: { ...expForm.data, duration: e.target.value } })} />
+                <textarea className="text-input text-area" placeholder="Description (optional)" value={expForm.data.description} onChange={(e) => setExpForm({ ...expForm, data: { ...expForm.data, description: e.target.value } })} />
               </div>
               <div className="form-btns">
                 <button className="btn btn-primary btn-sm" onClick={saveExp}>Save</button>
@@ -272,9 +327,7 @@ export default function Portfolio() {
               </div>
             </div>
           ) : (
-            <button className="btn btn-outline add-btn" onClick={() => setExpForm({ mode: "add", data: { ...EMPTY_EXP } })}>
-              + Add Experience
-            </button>
+            <button className="btn btn-outline add-btn" onClick={() => setExpForm({ mode: "add", data: { ...EMPTY_EXP } })}>+ Add Experience</button>
           )}
         </div>
       </section>
@@ -287,7 +340,6 @@ export default function Portfolio() {
             <h2 className="sec-title">What I&apos;ve Built</h2>
             <p className="sec-sub">A selection of my recent work</p>
           </div>
-
           <div className="projects-grid">
             {projects.map((proj) => (
               <div key={proj.id} className="proj-card glass">
@@ -300,31 +352,20 @@ export default function Portfolio() {
                 </div>
                 <p className="proj-desc">{proj.description}</p>
                 <div className="proj-footer">
-                  <div className="proj-tags">
-                    {proj.tags.map((t) => <span key={t} className="proj-tag">{t}</span>)}
-                  </div>
-                  {proj.link && (
-                    <a href={proj.link} target="_blank" rel="noreferrer" className="proj-link">
-                      View →
-                    </a>
-                  )}
+                  <div className="proj-tags">{proj.tags.map((t) => <span key={t} className="proj-tag">{t}</span>)}</div>
+                  {proj.link && <a href={proj.link} target="_blank" rel="noreferrer" className="proj-link">View →</a>}
                 </div>
               </div>
             ))}
           </div>
-
           {projForm ? (
             <div className="form-card glass">
               <h3 className="form-title">{projForm.mode === "add" ? "Add Project" : "Edit Project"}</h3>
               <div className="form-grid">
-                <input className="text-input" placeholder="Project Name *" value={projForm.data.name}
-                  onChange={(e) => setProjForm({ ...projForm, data: { ...projForm.data, name: e.target.value } })} />
-                <input className="text-input" placeholder="Project Link (URL)" value={projForm.data.link}
-                  onChange={(e) => setProjForm({ ...projForm, data: { ...projForm.data, link: e.target.value } })} />
-                <textarea className="text-input text-area" placeholder="Description *" value={projForm.data.description}
-                  onChange={(e) => setProjForm({ ...projForm, data: { ...projForm.data, description: e.target.value } })} />
-                <input className="text-input" placeholder="Tags (comma separated, e.g. React, Node.js)" value={projForm.data.tags}
-                  onChange={(e) => setProjForm({ ...projForm, data: { ...projForm.data, tags: e.target.value } })} />
+                <input className="text-input" placeholder="Project Name *" value={projForm.data.name} onChange={(e) => setProjForm({ ...projForm, data: { ...projForm.data, name: e.target.value } })} />
+                <input className="text-input" placeholder="Project Link (URL)" value={projForm.data.link} onChange={(e) => setProjForm({ ...projForm, data: { ...projForm.data, link: e.target.value } })} />
+                <textarea className="text-input text-area" placeholder="Description *" value={projForm.data.description} onChange={(e) => setProjForm({ ...projForm, data: { ...projForm.data, description: e.target.value } })} />
+                <input className="text-input" placeholder="Tags (comma separated)" value={projForm.data.tags} onChange={(e) => setProjForm({ ...projForm, data: { ...projForm.data, tags: e.target.value } })} />
               </div>
               <div className="form-btns">
                 <button className="btn btn-primary btn-sm" onClick={saveProj}>Save</button>
@@ -332,9 +373,7 @@ export default function Portfolio() {
               </div>
             </div>
           ) : (
-            <button className="btn btn-outline add-btn" onClick={() => setProjForm({ mode: "add", data: { ...EMPTY_PROJ } })}>
-              + Add Project
-            </button>
+            <button className="btn btn-outline add-btn" onClick={() => setProjForm({ mode: "add", data: { ...EMPTY_PROJ } })}>+ Add Project</button>
           )}
         </div>
       </section>
@@ -375,48 +414,6 @@ export default function Portfolio() {
         </div>
       </section>
 
-      {/* ── RESUME ── */}
-      <section id="resume" className="section resume-sec">
-        <div className="container">
-          <div className="sec-header">
-            <span className="sec-badge">Resume</span>
-            <h2 className="sec-title">My Resume</h2>
-            <p className="sec-sub">Upload, view &amp; download your resume</p>
-          </div>
-          <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx" onChange={handleUpload} style={{ display: "none" }} />
-          <div className="resume-box glass">
-            {!resume ? (
-              <div className="resume-upload">
-                <div className="upload-icon-wrap"><span className="upload-icon">📄</span><div className="upload-ring" /></div>
-                <h3>Upload Your Resume</h3>
-                <p>Supports PDF, DOC, DOCX files</p>
-                {uploadError && <p className="form-error">{uploadError}</p>}
-                <button className="btn btn-primary btn-lg" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-                  {uploading ? <><span className="spinner" /> Uploading…</> : "📤 Upload Resume"}
-                </button>
-              </div>
-            ) : (
-              <div className="resume-uploaded">
-                <div className="resume-info">
-                  <div className="resume-file-icon">📋</div>
-                  <div>
-                    <h3 className="resume-filename">{resume.name}</h3>
-                    <p className="resume-meta">{resume.size} &nbsp;·&nbsp; Uploaded {resume.uploadedAt}</p>
-                  </div>
-                </div>
-                {uploadError && <p className="form-error">{uploadError}</p>}
-                <div className="resume-actions">
-                  <button className="btn btn-primary" onClick={viewResume}>👁 View</button>
-                  <button className="btn btn-outline" onClick={downloadResume}>⬇ Download</button>
-                  <button className="btn btn-ghost" onClick={() => fileInputRef.current?.click()} disabled={uploading}>🔄 Replace</button>
-                  <button className="btn btn-danger" onClick={deleteResume}>🗑 Delete</button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-
       {/* ── CONTACT ── */}
       <section id="contact" className="section contact-sec">
         <div className="container">
@@ -425,15 +422,41 @@ export default function Portfolio() {
             <h2 className="sec-title">Let&apos;s Connect</h2>
             <p className="sec-sub">Reach out — I&apos;d love to hear from you</p>
           </div>
-          <div className="contact-grid">
-            <a href="https://www.linkedin.com/in/bankebihari01/" target="_blank" rel="noreferrer" className="contact-card glass">
-              <span className="contact-icon">💼</span>
-              <div><strong>LinkedIn</strong><p>linkedin.com/in/bankebihari01</p></div>
-            </a>
-            <a href="https://github.com/bankebihari" target="_blank" rel="noreferrer" className="contact-card glass">
-              <span className="contact-icon">🐙</span>
-              <div><strong>GitHub</strong><p>github.com/bankebihari</p></div>
-            </a>
+
+          <div className="contact-layout">
+            {/* Left — info cards */}
+            <div className="contact-info">
+              <a href="mailto:bankebihari1206@gmail.com" className="contact-card glass">
+                <span className="contact-icon">📧</span>
+                <div><strong>Email</strong><p>bankebihari1206@gmail.com</p></div>
+              </a>
+              <a href="https://www.linkedin.com/in/bankebihari01/" target="_blank" rel="noreferrer" className="contact-card glass">
+                <span className="contact-icon">💼</span>
+                <div><strong>LinkedIn</strong><p>linkedin.com/in/bankebihari01</p></div>
+              </a>
+              <a href="https://github.com/bankebihari" target="_blank" rel="noreferrer" className="contact-card glass">
+                <span className="contact-icon">🐙</span>
+                <div><strong>GitHub</strong><p>github.com/bankebihari</p></div>
+              </a>
+            </div>
+
+            {/* Right — email form */}
+            <form className="contact-form glass" onSubmit={handleContact}>
+              <h3 className="form-title">Send a Message</h3>
+              <div className="form-row-2">
+                <input className="text-input" placeholder="Your Name" required
+                  value={contactForm.name} onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })} />
+                <input className="text-input" type="email" placeholder="Your Email" required
+                  value={contactForm.email} onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })} />
+              </div>
+              <input className="text-input" placeholder="Subject"
+                value={contactForm.subject} onChange={(e) => setContactForm({ ...contactForm, subject: e.target.value })} />
+              <textarea className="text-input text-area contact-textarea" placeholder="Your message…" required
+                value={contactForm.message} onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })} />
+              <button type="submit" className="btn btn-primary" style={{ width: "100%" }}>
+                {contactSent ? "✓ Opening your mail client…" : "📨 Send Message"}
+              </button>
+            </form>
           </div>
         </div>
       </section>
