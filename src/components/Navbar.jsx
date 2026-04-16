@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import "./Navbar.css";
 
-const NAV_ITEMS = ["home", "about", "skills", "resume", "contact"];
+const NAV_ITEMS = ["home", "about", "experience", "projects", "skills", "resume", "contact"];
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);

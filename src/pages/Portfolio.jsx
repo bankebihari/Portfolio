@@ -21,90 +21,127 @@ const DEFAULT_SKILLS = [
   "Microsoft Azure", "Azure DevOps Server", "Azure DevOps Services", "Azure SQL",
   "Amazon Web Services (AWS)", "AWS Lambda", "Cloud Computing",
 ];
+
 const DEFAULT_NAME = "Banke Bihari";
 
+const DEFAULT_EXPERIENCES = [
+  {
+    id: 1,
+    role: "Full Stack Developer",
+    company: "Your Company",
+    duration: "Jan 2024 – Present",
+    description: "Built and maintained scalable web applications using React, Node.js, and cloud services.",
+  },
+  {
+    id: 2,
+    role: "Backend Developer Intern",
+    company: "Previous Company",
+    duration: "Jun 2023 – Dec 2023",
+    description: "Developed REST APIs with Python/FastAPI, integrated Azure services, and improved query performance.",
+  },
+];
+
+const DEFAULT_PROJECTS = [
+  {
+    id: 1,
+    name: "Portfolio Website",
+    description: "Personal portfolio built with React and deployed on Vercel. Features dark theme, editable sections, and resume upload.",
+    link: "https://react-blog-three-iota.vercel.app",
+    tags: ["React", "CSS", "Vercel"],
+  },
+  {
+    id: 2,
+    name: "Blog Platform",
+    description: "A two-page React blog with post listing and detail views, built with React Router and Vite.",
+    link: "https://github.com/bankebihari/calude-test",
+    tags: ["React", "React Router", "Vite"],
+  },
+];
+
+const EMPTY_EXP = { role: "", company: "", duration: "", description: "" };
+const EMPTY_PROJ = { name: "", description: "", link: "", tags: "" };
+
 export default function Portfolio() {
-  /* ── Name state ── */
+  /* ── Name ── */
   const [name, setName] = useState(() => {
-    try {
-      return localStorage.getItem("pf_name_v2") || DEFAULT_NAME;
-    } catch {
-      return DEFAULT_NAME;
-    }
+    try { return localStorage.getItem("pf_name_v2") || DEFAULT_NAME; } catch { return DEFAULT_NAME; }
   });
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
   const nameInputRef = useRef(null);
 
-  const startEditName = () => {
-    setNameInput(name);
-    setEditingName(true);
-    setTimeout(() => nameInputRef.current?.focus(), 50);
-  };
-
-  const saveName = () => {
-    const val = nameInput.trim();
-    if (val) {
-      setName(val);
-      try { localStorage.setItem("pf_name_v2", val); } catch {}
-    }
-    setEditingName(false);
-  };
-
+  const startEditName = () => { setNameInput(name); setEditingName(true); setTimeout(() => nameInputRef.current?.focus(), 50); };
+  const saveName = () => { const v = nameInput.trim(); if (v) { setName(v); try { localStorage.setItem("pf_name_v2", v); } catch {} } setEditingName(false); };
   const cancelEditName = () => setEditingName(false);
 
-  /* ── Skills state ── */
+  /* ── Skills ── */
   const [skills, setSkills] = useState(() => {
-    try {
-      const s = localStorage.getItem("pf_skills_v2");
-      return s ? JSON.parse(s) : DEFAULT_SKILLS;
-    } catch {
-      return DEFAULT_SKILLS;
-    }
+    try { const s = localStorage.getItem("pf_skills_v2"); return s ? JSON.parse(s) : DEFAULT_SKILLS; } catch { return DEFAULT_SKILLS; }
   });
   const [newSkill, setNewSkill] = useState("");
-  const [showInput, setShowInput] = useState(false);
+  const [showSkillInput, setShowSkillInput] = useState(false);
   const [skillError, setSkillError] = useState("");
   const skillInputRef = useRef(null);
 
-  useEffect(() => {
-    localStorage.setItem("pf_skills_v2", JSON.stringify(skills));
-  }, [skills]);
+  useEffect(() => { localStorage.setItem("pf_skills_v2", JSON.stringify(skills)); }, [skills]);
 
   const addSkill = () => {
-    const val = newSkill.trim();
-    if (!val) { setSkillError("Please enter a skill name."); return; }
-    if (skills.some((s) => s.toLowerCase() === val.toLowerCase())) {
-      setSkillError("Skill already exists."); return;
+    const v = newSkill.trim();
+    if (!v) { setSkillError("Please enter a skill name."); return; }
+    if (skills.some((s) => s.toLowerCase() === v.toLowerCase())) { setSkillError("Skill already exists."); return; }
+    setSkills([...skills, v]); setNewSkill(""); setSkillError(""); setShowSkillInput(false);
+  };
+  const deleteSkill = (i) => setSkills(skills.filter((_, idx) => idx !== i));
+  const openSkillInput = () => { setShowSkillInput(true); setSkillError(""); setTimeout(() => skillInputRef.current?.focus(), 50); };
+  const cancelSkillInput = () => { setShowSkillInput(false); setNewSkill(""); setSkillError(""); };
+
+  /* ── Experience ── */
+  const [experiences, setExperiences] = useState(() => {
+    try { const e = localStorage.getItem("pf_exp_v1"); return e ? JSON.parse(e) : DEFAULT_EXPERIENCES; } catch { return DEFAULT_EXPERIENCES; }
+  });
+  const [expForm, setExpForm] = useState(null); // null | { mode:'add'|'edit', data, id? }
+
+  useEffect(() => { localStorage.setItem("pf_exp_v1", JSON.stringify(experiences)); }, [experiences]);
+
+  const saveExp = () => {
+    const { role, company, duration } = expForm.data;
+    if (!role.trim() || !company.trim() || !duration.trim()) return;
+    if (expForm.mode === "add") {
+      setExperiences([...experiences, { ...expForm.data, id: Date.now() }]);
+    } else {
+      setExperiences(experiences.map((e) => e.id === expForm.id ? { ...expForm.data, id: expForm.id } : e));
     }
-    setSkills([...skills, val]);
-    setNewSkill("");
-    setSkillError("");
-    setShowInput(false);
+    setExpForm(null);
   };
+  const deleteExp = (id) => setExperiences(experiences.filter((e) => e.id !== id));
 
-  const deleteSkill = (idx) => setSkills(skills.filter((_, i) => i !== idx));
+  /* ── Projects ── */
+  const [projects, setProjects] = useState(() => {
+    try { const p = localStorage.getItem("pf_proj_v1"); return p ? JSON.parse(p) : DEFAULT_PROJECTS; } catch { return DEFAULT_PROJECTS; }
+  });
+  const [projForm, setProjForm] = useState(null); // null | { mode, data, id? }
 
-  const openInput = () => {
-    setShowInput(true);
-    setSkillError("");
-    setTimeout(() => skillInputRef.current?.focus(), 50);
+  useEffect(() => { localStorage.setItem("pf_proj_v1", JSON.stringify(projects)); }, [projects]);
+
+  const saveProj = () => {
+    const { name: n, description } = projForm.data;
+    if (!n.trim() || !description.trim()) return;
+    const tags = typeof projForm.data.tags === "string"
+      ? projForm.data.tags.split(",").map((t) => t.trim()).filter(Boolean)
+      : projForm.data.tags;
+    const data = { ...projForm.data, tags };
+    if (projForm.mode === "add") {
+      setProjects([...projects, { ...data, id: Date.now() }]);
+    } else {
+      setProjects(projects.map((p) => p.id === projForm.id ? { ...data, id: projForm.id } : p));
+    }
+    setProjForm(null);
   };
+  const deleteProj = (id) => setProjects(projects.filter((p) => p.id !== id));
 
-  const cancelInput = () => {
-    setShowInput(false);
-    setNewSkill("");
-    setSkillError("");
-  };
-
-  /* ── Resume state ── */
+  /* ── Resume ── */
   const [resume, setResume] = useState(() => {
-    try {
-      const r = localStorage.getItem("pf_resume_v2");
-      return r ? JSON.parse(r) : null;
-    } catch {
-      return null;
-    }
+    try { const r = localStorage.getItem("pf_resume_v2"); return r ? JSON.parse(r) : null; } catch { return null; }
   });
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
@@ -113,120 +150,64 @@ export default function Portfolio() {
   const handleUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    setUploading(true);
-    setUploadError("");
+    setUploading(true); setUploadError("");
     const reader = new FileReader();
     reader.onload = (ev) => {
       const data = {
         name: file.name,
-        size:
-          file.size > 1024 * 1024
-            ? (file.size / (1024 * 1024)).toFixed(2) + " MB"
-            : (file.size / 1024).toFixed(1) + " KB",
+        size: file.size > 1024 * 1024 ? (file.size / (1024 * 1024)).toFixed(2) + " MB" : (file.size / 1024).toFixed(1) + " KB",
         uploadedAt: new Date().toLocaleDateString(),
         dataUrl: ev.target.result,
       };
-      try {
-        localStorage.setItem("pf_resume_v2", JSON.stringify(data));
-        setResume(data);
-      } catch {
-        setUploadError("File too large to store. Try a smaller file.");
-      }
+      try { localStorage.setItem("pf_resume_v2", JSON.stringify(data)); setResume(data); }
+      catch { setUploadError("File too large to store. Try a smaller file."); }
       setUploading(false);
     };
-    reader.onerror = () => {
-      setUploadError("Failed to read file.");
-      setUploading(false);
-    };
+    reader.onerror = () => { setUploadError("Failed to read file."); setUploading(false); };
     reader.readAsDataURL(file);
     e.target.value = "";
   };
 
-  const downloadResume = () => {
-    const a = document.createElement("a");
-    a.href = resume.dataUrl;
-    a.download = resume.name;
-    a.click();
-  };
-
-  const viewResume = () => {
-    const win = window.open("", "_blank");
-    if (win) {
-      win.document.write(
-        `<html><body style="margin:0"><iframe src="${resume.dataUrl}" width="100%" height="100%" frameborder="0"></iframe></body></html>`
-      );
-    }
-  };
-
-  const deleteResume = () => {
-    setResume(null);
-    localStorage.removeItem("pf_resume_v2");
-  };
+  const downloadResume = () => { const a = document.createElement("a"); a.href = resume.dataUrl; a.download = resume.name; a.click(); };
+  const viewResume = () => { const w = window.open("", "_blank"); if (w) w.document.write(`<html><body style="margin:0"><iframe src="${resume.dataUrl}" width="100%" height="100%" frameborder="0"></iframe></body></html>`); };
+  const deleteResume = () => { setResume(null); localStorage.removeItem("pf_resume_v2"); };
 
   return (
     <div className="pf">
       {/* ── HERO ── */}
       <section id="home" className="hero">
         <div className="hero-bg">
-          <div className="orb orb-1" />
-          <div className="orb orb-2" />
-          <div className="orb orb-3" />
+          <div className="orb orb-1" /><div className="orb orb-2" /><div className="orb orb-3" />
           <div className="hero-grid" />
         </div>
         <div className="hero-content">
-          <div className="hero-badge">
-            <span className="badge-dot" />
-            Available for opportunities
-          </div>
+          <div className="hero-badge"><span className="badge-dot" />Available for opportunities</div>
           <h1 className="hero-name">
             Hi, I&apos;m{" "}
             {editingName ? (
               <span className="name-edit-wrap">
-                <input
-                  ref={nameInputRef}
-                  className="name-input"
-                  value={nameInput}
-                  onChange={(e) => setNameInput(e.target.value)}
-                  onBlur={saveName}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") saveName();
-                    if (e.key === "Escape") cancelEditName();
-                  }}
-                />
+                <input ref={nameInputRef} className="name-input" value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)} onBlur={saveName}
+                  onKeyDown={(e) => { if (e.key === "Enter") saveName(); if (e.key === "Escape") cancelEditName(); }} />
               </span>
             ) : (
-              <span
-                className="grad-text name-editable"
-                onClick={startEditName}
-                title="Click to edit your name"
-              >
-                {name}
-                <span className="name-edit-icon">✎</span>
+              <span className="grad-text name-editable" onClick={startEditName} title="Click to edit your name">
+                {name}<span className="name-edit-icon">✎</span>
               </span>
             )}
           </h1>
           <h2 className="hero-role">Full Stack Developer</h2>
-          <p className="hero-bio">
-            I craft beautiful, high-performance web experiences with modern
-            technologies. Passionate about clean code, intuitive design, and
-            building things that matter.
-          </p>
+          <p className="hero-bio">I craft beautiful, high-performance web experiences with modern technologies. Passionate about clean code, intuitive design, and building things that matter.</p>
           <div className="hero-btns">
-            <a href="#skills" className="btn btn-primary">
-              View My Skills
-            </a>
-            <a href="#resume" className="btn btn-outline">
-              My Resume
-            </a>
+            <a href="#projects" className="btn btn-primary">View My Projects</a>
+            <a href="#resume" className="btn btn-outline">My Resume</a>
           </div>
           <div className="hero-socials">
             <a href="https://github.com/bankebihari" target="_blank" rel="noreferrer" className="social-chip">GitHub</a>
             <a href="https://www.linkedin.com/in/bankebihari01/" target="_blank" rel="noreferrer" className="social-chip">LinkedIn</a>
           </div>
         </div>
-        <div className="scroll-hint">
-          <div className="scroll-line" />
-        </div>
+        <div className="scroll-hint"><div className="scroll-line" /></div>
       </section>
 
       {/* ── ABOUT ── */}
@@ -238,31 +219,123 @@ export default function Portfolio() {
             <p className="sec-sub">A little about my journey and values</p>
           </div>
           <div className="about-grid">
-            <div className="about-card glass">
-              <div className="about-icon">🎯</div>
-              <h3>Mission</h3>
-              <p>
-                Building impactful digital products that solve real-world
-                problems with elegant, scalable solutions.
-              </p>
-            </div>
-            <div className="about-card glass">
-              <div className="about-icon">💡</div>
-              <h3>Approach</h3>
-              <p>
-                I combine creativity with technical expertise to deliver
-                exceptional, user-centered experiences.
-              </p>
-            </div>
-            <div className="about-card glass">
-              <div className="about-icon">🚀</div>
-              <h3>Goals</h3>
-              <p>
-                Continuously learning, growing, and pushing boundaries — one
-                project at a time.
-              </p>
-            </div>
+            <div className="about-card glass"><div className="about-icon">🎯</div><h3>Mission</h3><p>Building impactful digital products that solve real-world problems with elegant, scalable solutions.</p></div>
+            <div className="about-card glass"><div className="about-icon">💡</div><h3>Approach</h3><p>I combine creativity with technical expertise to deliver exceptional, user-centered experiences.</p></div>
+            <div className="about-card glass"><div className="about-icon">🚀</div><h3>Goals</h3><p>Continuously learning, growing, and pushing boundaries — one project at a time.</p></div>
           </div>
+        </div>
+      </section>
+
+      {/* ── EXPERIENCE ── */}
+      <section id="experience" className="section exp-sec">
+        <div className="container">
+          <div className="sec-header">
+            <span className="sec-badge">Experience</span>
+            <h2 className="sec-title">Where I&apos;ve Worked</h2>
+            <p className="sec-sub">My professional journey</p>
+          </div>
+
+          <div className="exp-list">
+            {experiences.map((exp) => (
+              <div key={exp.id} className="exp-card glass">
+                <div className="exp-top">
+                  <div>
+                    <h3 className="exp-role">{exp.role}</h3>
+                    <div className="exp-company">{exp.company} <span className="exp-duration">· {exp.duration}</span></div>
+                  </div>
+                  <div className="exp-actions">
+                    <button className="icon-btn" title="Edit" onClick={() => setExpForm({ mode: "edit", id: exp.id, data: { ...exp } })}>✎</button>
+                    <button className="icon-btn icon-btn--danger" title="Delete" onClick={() => deleteExp(exp.id)}>✕</button>
+                  </div>
+                </div>
+                {exp.description && <p className="exp-desc">{exp.description}</p>}
+              </div>
+            ))}
+          </div>
+
+          {expForm ? (
+            <div className="form-card glass">
+              <h3 className="form-title">{expForm.mode === "add" ? "Add Experience" : "Edit Experience"}</h3>
+              <div className="form-grid">
+                <input className="text-input" placeholder="Job Title *" value={expForm.data.role}
+                  onChange={(e) => setExpForm({ ...expForm, data: { ...expForm.data, role: e.target.value } })} />
+                <input className="text-input" placeholder="Company *" value={expForm.data.company}
+                  onChange={(e) => setExpForm({ ...expForm, data: { ...expForm.data, company: e.target.value } })} />
+                <input className="text-input" placeholder="Duration e.g. Jan 2024 – Present *" value={expForm.data.duration}
+                  onChange={(e) => setExpForm({ ...expForm, data: { ...expForm.data, duration: e.target.value } })} />
+                <textarea className="text-input text-area" placeholder="Description (optional)" value={expForm.data.description}
+                  onChange={(e) => setExpForm({ ...expForm, data: { ...expForm.data, description: e.target.value } })} />
+              </div>
+              <div className="form-btns">
+                <button className="btn btn-primary btn-sm" onClick={saveExp}>Save</button>
+                <button className="btn btn-ghost btn-sm" onClick={() => setExpForm(null)}>Cancel</button>
+              </div>
+            </div>
+          ) : (
+            <button className="btn btn-outline add-btn" onClick={() => setExpForm({ mode: "add", data: { ...EMPTY_EXP } })}>
+              + Add Experience
+            </button>
+          )}
+        </div>
+      </section>
+
+      {/* ── PROJECTS ── */}
+      <section id="projects" className="section projects-sec">
+        <div className="container">
+          <div className="sec-header">
+            <span className="sec-badge">Projects</span>
+            <h2 className="sec-title">What I&apos;ve Built</h2>
+            <p className="sec-sub">A selection of my recent work</p>
+          </div>
+
+          <div className="projects-grid">
+            {projects.map((proj) => (
+              <div key={proj.id} className="proj-card glass">
+                <div className="proj-top">
+                  <h3 className="proj-name">{proj.name}</h3>
+                  <div className="exp-actions">
+                    <button className="icon-btn" title="Edit" onClick={() => setProjForm({ mode: "edit", id: proj.id, data: { ...proj, tags: proj.tags.join(", ") } })}>✎</button>
+                    <button className="icon-btn icon-btn--danger" title="Delete" onClick={() => deleteProj(proj.id)}>✕</button>
+                  </div>
+                </div>
+                <p className="proj-desc">{proj.description}</p>
+                <div className="proj-footer">
+                  <div className="proj-tags">
+                    {proj.tags.map((t) => <span key={t} className="proj-tag">{t}</span>)}
+                  </div>
+                  {proj.link && (
+                    <a href={proj.link} target="_blank" rel="noreferrer" className="proj-link">
+                      View →
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {projForm ? (
+            <div className="form-card glass">
+              <h3 className="form-title">{projForm.mode === "add" ? "Add Project" : "Edit Project"}</h3>
+              <div className="form-grid">
+                <input className="text-input" placeholder="Project Name *" value={projForm.data.name}
+                  onChange={(e) => setProjForm({ ...projForm, data: { ...projForm.data, name: e.target.value } })} />
+                <input className="text-input" placeholder="Project Link (URL)" value={projForm.data.link}
+                  onChange={(e) => setProjForm({ ...projForm, data: { ...projForm.data, link: e.target.value } })} />
+                <textarea className="text-input text-area" placeholder="Description *" value={projForm.data.description}
+                  onChange={(e) => setProjForm({ ...projForm, data: { ...projForm.data, description: e.target.value } })} />
+                <input className="text-input" placeholder="Tags (comma separated, e.g. React, Node.js)" value={projForm.data.tags}
+                  onChange={(e) => setProjForm({ ...projForm, data: { ...projForm.data, tags: e.target.value } })} />
+              </div>
+              <div className="form-btns">
+                <button className="btn btn-primary btn-sm" onClick={saveProj}>Save</button>
+                <button className="btn btn-ghost btn-sm" onClick={() => setProjForm(null)}>Cancel</button>
+              </div>
+            </div>
+          ) : (
+            <button className="btn btn-outline add-btn" onClick={() => setProjForm({ mode: "add", data: { ...EMPTY_PROJ } })}>
+              + Add Project
+            </button>
+          )}
         </div>
       </section>
 
@@ -274,72 +347,29 @@ export default function Portfolio() {
             <h2 className="sec-title">What I Know</h2>
             <p className="sec-sub">Technologies &amp; tools I work with</p>
           </div>
-
           <div className="skills-box glass">
-            {skills.length === 0 && (
-              <p className="skills-empty">
-                No skills yet — add your first one below!
-              </p>
-            )}
+            {skills.length === 0 && <p className="skills-empty">No skills yet — add your first one below!</p>}
             <div className="skills-grid">
               {skills.map((skill, i) => (
-                <div
-                  key={skill + i}
-                  className="skill-tag"
-                  style={{ background: SKILL_COLORS[i % SKILL_COLORS.length] }}
-                >
+                <div key={skill + i} className="skill-tag" style={{ background: SKILL_COLORS[i % SKILL_COLORS.length] }}>
                   <span>{skill}</span>
-                  <button
-                    className="skill-del"
-                    onClick={() => deleteSkill(i)}
-                    title="Remove skill"
-                    aria-label={`Remove ${skill}`}
-                  >
-                    &times;
-                  </button>
+                  <button className="skill-del" onClick={() => deleteSkill(i)} title="Remove skill" aria-label={`Remove ${skill}`}>&times;</button>
                 </div>
               ))}
             </div>
-
-            {showInput && (
+            {showSkillInput && (
               <div className="skill-input-row">
-                <input
-                  ref={skillInputRef}
-                  className="text-input"
-                  placeholder="e.g. TypeScript, Python, Figma…"
-                  value={newSkill}
-                  onChange={(e) => {
-                    setNewSkill(e.target.value);
-                    setSkillError("");
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") addSkill();
-                    if (e.key === "Escape") cancelInput();
-                  }}
-                />
-                <button className="btn btn-primary btn-sm" onClick={addSkill}>
-                  Add
-                </button>
-                <button
-                  className="btn btn-ghost btn-sm"
-                  onClick={cancelInput}
-                >
-                  Cancel
-                </button>
+                <input ref={skillInputRef} className="text-input" placeholder="e.g. TypeScript, Python, Figma…"
+                  value={newSkill} onChange={(e) => { setNewSkill(e.target.value); setSkillError(""); }}
+                  onKeyDown={(e) => { if (e.key === "Enter") addSkill(); if (e.key === "Escape") cancelSkillInput(); }} />
+                <button className="btn btn-primary btn-sm" onClick={addSkill}>Add</button>
+                <button className="btn btn-ghost btn-sm" onClick={cancelSkillInput}>Cancel</button>
               </div>
             )}
-
             {skillError && <p className="form-error">{skillError}</p>}
-
             <div className="skills-footer">
-              {!showInput && (
-                <button className="btn btn-primary" onClick={openInput}>
-                  + Add Skill
-                </button>
-              )}
-              <span className="skills-count">
-                {skills.length} skill{skills.length !== 1 ? "s" : ""}
-              </span>
+              {!showSkillInput && <button className="btn btn-primary" onClick={openSkillInput}>+ Add Skill</button>}
+              <span className="skills-count">{skills.length} skill{skills.length !== 1 ? "s" : ""}</span>
             </div>
           </div>
         </div>
@@ -353,69 +383,33 @@ export default function Portfolio() {
             <h2 className="sec-title">My Resume</h2>
             <p className="sec-sub">Upload, view &amp; download your resume</p>
           </div>
-
-          {/* Hidden file input always present */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf,.doc,.docx"
-            onChange={handleUpload}
-            style={{ display: "none" }}
-          />
-
+          <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx" onChange={handleUpload} style={{ display: "none" }} />
           <div className="resume-box glass">
             {!resume ? (
-              /* Upload state */
               <div className="resume-upload">
-                <div className="upload-icon-wrap">
-                  <span className="upload-icon">📄</span>
-                  <div className="upload-ring" />
-                </div>
+                <div className="upload-icon-wrap"><span className="upload-icon">📄</span><div className="upload-ring" /></div>
                 <h3>Upload Your Resume</h3>
                 <p>Supports PDF, DOC, DOCX files</p>
                 {uploadError && <p className="form-error">{uploadError}</p>}
-                <button
-                  className="btn btn-primary btn-lg"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
-                >
-                  {uploading ? (
-                    <><span className="spinner" /> Uploading…</>
-                  ) : (
-                    "📤 Upload Resume"
-                  )}
+                <button className="btn btn-primary btn-lg" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+                  {uploading ? <><span className="spinner" /> Uploading…</> : "📤 Upload Resume"}
                 </button>
               </div>
             ) : (
-              /* Uploaded state */
               <div className="resume-uploaded">
                 <div className="resume-info">
                   <div className="resume-file-icon">📋</div>
                   <div>
                     <h3 className="resume-filename">{resume.name}</h3>
-                    <p className="resume-meta">
-                      {resume.size} &nbsp;·&nbsp; Uploaded {resume.uploadedAt}
-                    </p>
+                    <p className="resume-meta">{resume.size} &nbsp;·&nbsp; Uploaded {resume.uploadedAt}</p>
                   </div>
                 </div>
                 {uploadError && <p className="form-error">{uploadError}</p>}
                 <div className="resume-actions">
-                  <button className="btn btn-primary" onClick={viewResume}>
-                    👁 View
-                  </button>
-                  <button className="btn btn-outline" onClick={downloadResume}>
-                    ⬇ Download
-                  </button>
-                  <button
-                    className="btn btn-ghost"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading}
-                  >
-                    🔄 Replace
-                  </button>
-                  <button className="btn btn-danger" onClick={deleteResume}>
-                    🗑 Delete
-                  </button>
+                  <button className="btn btn-primary" onClick={viewResume}>👁 View</button>
+                  <button className="btn btn-outline" onClick={downloadResume}>⬇ Download</button>
+                  <button className="btn btn-ghost" onClick={() => fileInputRef.current?.click()} disabled={uploading}>🔄 Replace</button>
+                  <button className="btn btn-danger" onClick={deleteResume}>🗑 Delete</button>
                 </div>
               </div>
             )}
@@ -432,38 +426,20 @@ export default function Portfolio() {
             <p className="sec-sub">Reach out — I&apos;d love to hear from you</p>
           </div>
           <div className="contact-grid">
-            <a
-              href="https://www.linkedin.com/in/bankebihari01/"
-              target="_blank"
-              rel="noreferrer"
-              className="contact-card glass"
-            >
+            <a href="https://www.linkedin.com/in/bankebihari01/" target="_blank" rel="noreferrer" className="contact-card glass">
               <span className="contact-icon">💼</span>
-              <div>
-                <strong>LinkedIn</strong>
-                <p>linkedin.com/in/bankebihari01</p>
-              </div>
+              <div><strong>LinkedIn</strong><p>linkedin.com/in/bankebihari01</p></div>
             </a>
-            <a
-              href="https://github.com/bankebihari"
-              target="_blank"
-              rel="noreferrer"
-              className="contact-card glass"
-            >
+            <a href="https://github.com/bankebihari" target="_blank" rel="noreferrer" className="contact-card glass">
               <span className="contact-icon">🐙</span>
-              <div>
-                <strong>GitHub</strong>
-                <p>github.com/bankebihari</p>
-              </div>
+              <div><strong>GitHub</strong><p>github.com/bankebihari</p></div>
             </a>
           </div>
         </div>
       </section>
 
       <footer className="footer">
-        <p>
-          Designed &amp; built with <span className="heart">♥</span> using React
-        </p>
+        <p>Designed &amp; built with <span className="heart">♥</span> using React</p>
       </footer>
     </div>
   );
