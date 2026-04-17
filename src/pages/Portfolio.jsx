@@ -184,38 +184,57 @@ export default function Portfolio() {
     dragItem.current = null; dragOver.current = null;
   };
 
-  /* ── Resume ── */
+  /* ── Resume (Vercel Blob — public for all visitors) ── */
   const [resume, setResume] = useState(() => {
-    try { const r = localStorage.getItem("pf_resume_v2"); return r ? JSON.parse(r) : null; } catch { return null; }
+    try { const r = localStorage.getItem("pf_resume_blob"); return r ? JSON.parse(r) : null; } catch { return null; }
   });
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const fileInputRef = useRef(null);
 
-  const handleUpload = (e) => {
+  // Fetch latest resume URL from server on mount
+  useEffect(() => {
+    fetch("/api/resume-meta")
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d?.url) { setResume(d); localStorage.setItem("pf_resume_blob", JSON.stringify(d)); } })
+      .catch(() => {});
+  }, []);
+
+  const handleUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     setUploading(true); setUploadError("");
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const data = {
+    try {
+      const res = await fetch("/api/upload-resume", {
+        method: "PUT",
+        headers: { "x-filename": file.name, "content-type": file.type },
+        body: file,
+      });
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json();
+      const meta = {
         name: file.name,
+        url: data.url,
         size: file.size > 1024 * 1024 ? (file.size / (1024 * 1024)).toFixed(2) + " MB" : (file.size / 1024).toFixed(1) + " KB",
         uploadedAt: new Date().toLocaleDateString(),
-        dataUrl: ev.target.result,
-        isPdf: file.type === "application/pdf",
       };
-      try { localStorage.setItem("pf_resume_v2", JSON.stringify(data)); setResume(data); }
-      catch { setUploadError("File too large to store. Try a smaller file."); }
-      setUploading(false);
-    };
-    reader.onerror = () => { setUploadError("Failed to read file."); setUploading(false); };
-    reader.readAsDataURL(file);
+      setResume(meta);
+      localStorage.setItem("pf_resume_blob", JSON.stringify(meta));
+    } catch {
+      setUploadError("Upload failed. Please try again.");
+    }
+    setUploading(false);
     e.target.value = "";
   };
 
-  const downloadResume = () => { const a = document.createElement("a"); a.href = resume.dataUrl; a.download = resume.name; a.click(); };
-  const deleteResume = () => requireAuth(() => { setResume(null); localStorage.removeItem("pf_resume_v2"); });
+  const downloadResume = () => { window.open(resume.url, "_blank"); };
+  const deleteResume = () => requireAuth(async () => {
+    if (resume?.url) {
+      await fetch("/api/upload-resume", { method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify({ url: resume.url }) }).catch(() => {});
+    }
+    setResume(null);
+    localStorage.removeItem("pf_resume_blob");
+  });
 
   /* ── Phone (editable) ── */
   const [phone, setPhone] = useState(() => localStorage.getItem("pf_phone") || "+91 00000 00000");
