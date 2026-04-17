@@ -242,7 +242,14 @@ export default function Portfolio() {
     e.target.value = "";
   };
 
-  const downloadResume = () => { window.open(resume.url, "_blank"); };
+  const downloadResume = () => {
+    const a = document.createElement("a");
+    a.href = "/api/resume-file";
+    a.download = resume.name || "resume.pdf";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
   const deleteResume = () => requireAuth(async () => {
     if (resume?.url) {
       await fetch("/api/upload-resume", { method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify({ url: resume.url }) }).catch(() => {});

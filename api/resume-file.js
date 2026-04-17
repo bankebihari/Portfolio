@@ -34,10 +34,10 @@ export default async function handler(req, res) {
       fileBuffer = Buffer.from(doc.data);
     }
 
-    res.setHeader("Content-Type", doc.contentType || "application/pdf");
+    res.setHeader("Content-Type", "application/octet-stream");
     res.setHeader("Content-Length", fileBuffer.length);
-    res.setHeader("Content-Disposition", `inline; filename="${doc.name || "resume.pdf"}"`);
-    res.setHeader("Cache-Control", "public, max-age=3600");
+    res.setHeader("Content-Disposition", `attachment; filename="${doc.name || "resume.pdf"}"`);
+    res.setHeader("Cache-Control", "no-cache");
     return res.status(200).send(fileBuffer);
   } catch (e) {
     return res.status(500).json({ error: e.message });
