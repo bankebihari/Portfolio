@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import "./Portfolio.css";
 
-/* ── Auth credentials ── */
-const AUTH_ID = "hellobro1206";
-const AUTH_PASS = "hello@123321";
-
+/* ─────────────────────────────────────────
+   CONSTANTS
+───────────────────────────────────────── */
 const SKILL_COLORS = [
   "linear-gradient(135deg,#667eea,#764ba2)",
   "linear-gradient(135deg,#f093fb,#f5576c)",
@@ -17,6 +16,18 @@ const SKILL_COLORS = [
   "linear-gradient(135deg,#f7971e,#ffd200)",
   "linear-gradient(135deg,#56ab2f,#a8e063)",
 ];
+
+const DEFAULT_HERO = {
+  badge: "Available for opportunities",
+  name: "Banke",
+  role: "Full Stack Developer",
+  bio: "I craft beautiful, high-performance web experiences with modern technologies. Passionate about clean code, intuitive design, and building things that matter.",
+  gifUrl: "https://cdn.dribbble.com/users/926537/screenshots/4502924/python-2.gif",
+  githubUrl: "https://github.com/bankebihari",
+  linkedinUrl: "https://www.linkedin.com/in/bankebihari01/",
+  contactEmail: "bankebihari1206@gmail.com",
+  footerText: "Designed & built with ♥ by Banke Bihari",
+};
 
 const DEFAULT_SKILLS = [
   "React.js", "Node.js", "JavaScript", "Python", "Java",
@@ -38,19 +49,44 @@ const DEFAULT_PROJECTS = [
   { id: 4, name: "Blog Platform", description: "A two-page React blog with post listing and detail views, built with React Router and Vite.", link: "https://github.com/bankebihari/Portfolio", tags: ["React", "React Router", "Vite"] },
 ];
 
-const EMPTY_EXP = { role: "", company: "", duration: "", description: "" };
+const DEFAULT_ABOUT = [
+  { icon: "🔭", text: "I'm skilled in <strong>React.js</strong> and <strong>Flask</strong> web projects" },
+  { icon: "🌱", text: "I'm skilled in <strong>MERN Stack</strong>, <strong>WordPress</strong>" },
+  { icon: "👯", text: "I'm looking to collaborate on <strong>Everything</strong>" },
+  { icon: "💬", text: "Ask me about <strong>AWS, Python, Java, C++, HTML, CSS, Flask, React.js, Node.js, Express.js</strong>" },
+  { icon: "📫", text: 'How to reach me: <a href="mailto:bankebihari1206@gmail.com" class="readme-email">bankebihari1206@gmail.com</a>' },
+  { icon: "⚡", text: "Fun fact: I think I am Funny 😄" },
+];
+
+const EMPTY_EXP  = { role: "", company: "", duration: "", description: "" };
 const EMPTY_PROJ = { name: "", description: "", link: "", tags: "" };
 
-/* ── Auth Modal ── */
+/* ─────────────────────────────────────────
+   AUTH MODAL  (server-side validation)
+───────────────────────────────────────── */
 function AuthModal({ onConfirm, onCancel }) {
-  const [uid, setUid] = useState("");
-  const [pwd, setPwd] = useState("");
-  const [err, setErr] = useState("");
+  const [uid, setUid]       = useState("");
+  const [pwd, setPwd]       = useState("");
+  const [err, setErr]       = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    if (uid === AUTH_ID && pwd === AUTH_PASS) { onConfirm(); }
-    else { setErr("Invalid ID or password. Try again."); setUid(""); setPwd(""); }
+    setLoading(true); setErr("");
+    try {
+      const res  = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: uid, password: pwd }),
+      });
+      const data = await res.json();
+      if (data.ok) { onConfirm(); }
+      else { setErr(data.error || "Invalid ID or password."); setUid(""); setPwd(""); }
+    } catch {
+      setErr("Connection error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -63,7 +99,9 @@ function AuthModal({ onConfirm, onCancel }) {
           <input className="text-input" type="password" placeholder="Password" value={pwd} onChange={(e) => setPwd(e.target.value)} />
           {err && <p className="form-error">{err}</p>}
           <div className="form-btns">
-            <button type="submit" className="btn btn-primary btn-sm">Confirm</button>
+            <button type="submit" className="btn btn-primary btn-sm" disabled={loading}>
+              {loading ? "Checking…" : "Confirm"}
+            </button>
             <button type="button" className="btn btn-ghost btn-sm" onClick={onCancel}>Cancel</button>
           </div>
         </form>
@@ -72,19 +110,109 @@ function AuthModal({ onConfirm, onCancel }) {
   );
 }
 
+/* ─────────────────────────────────────────
+   HERO EDIT MODAL
+───────────────────────────────────────── */
+function HeroEditModal({ hero, onSave, onCancel }) {
+  const [form, setForm] = useState({ ...hero });
+  const f = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
+
+  return (
+    <div className="auth-overlay" onClick={onCancel}>
+      <div className="auth-modal glass" style={{ maxWidth: 580, width: "92%" }} onClick={(e) => e.stopPropagation()}>
+        <h3 className="auth-title">✎ Edit Site Content</h3>
+        <p className="auth-sub" style={{ marginBottom: "1rem" }}>All changes save to database</p>
+        <div className="form-grid">
+          <input className="text-input" placeholder="Badge text (e.g. Available for opportunities)" value={form.badge}        onChange={f("badge")} />
+          <input className="text-input" placeholder="Your Name"                                       value={form.name}         onChange={f("name")} />
+          <input className="text-input" placeholder="Title / Role (e.g. Full Stack Developer)"        value={form.role}         onChange={f("role")} />
+          <textarea className="text-input text-area" placeholder="Bio / Intro paragraph"              value={form.bio}          onChange={f("bio")} />
+          <input className="text-input" placeholder="GitHub URL"                                      value={form.githubUrl}    onChange={f("githubUrl")} />
+          <input className="text-input" placeholder="LinkedIn URL"                                    value={form.linkedinUrl}  onChange={f("linkedinUrl")} />
+          <input className="text-input" placeholder="Contact Email"                                   value={form.contactEmail} onChange={f("contactEmail")} />
+          <input className="text-input" placeholder="Hero GIF / Avatar URL"                           value={form.gifUrl}       onChange={f("gifUrl")} />
+          <input className="text-input" placeholder="Footer text"                                     value={form.footerText}   onChange={f("footerText")} />
+        </div>
+        <div className="form-btns" style={{ marginTop: "1rem" }}>
+          <button className="btn btn-primary btn-sm" onClick={() => onSave(form)}>💾 Save All</button>
+          <button className="btn btn-ghost btn-sm"   onClick={onCancel}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────
+   CHANGE CREDENTIALS MODAL
+───────────────────────────────────────── */
+function CredentialsModal({ onClose }) {
+  const [curId,   setCurId]   = useState("");
+  const [curPass, setCurPass] = useState("");
+  const [newId,   setNewId]   = useState("");
+  const [newPass, setNewPass] = useState("");
+  const [msg,     setMsg]     = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setLoading(true); setMsg("");
+    try {
+      const res  = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: curId, password: curPass, action: "update", newId, newPass }),
+      });
+      const data = await res.json();
+      setMsg(data.ok ? "✅ Credentials updated!" : data.error || "Invalid current credentials.");
+    } catch {
+      setMsg("Connection error.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="auth-overlay" onClick={onClose}>
+      <div className="auth-modal glass" onClick={(e) => e.stopPropagation()}>
+        <h3 className="auth-title">🔐 Change Admin Credentials</h3>
+        <p className="auth-sub">Enter current credentials to update</p>
+        <form onSubmit={submit} className="auth-form">
+          <input className="text-input" placeholder="Current User ID"   value={curId}   onChange={(e) => setCurId(e.target.value)} />
+          <input className="text-input" type="password" placeholder="Current Password" value={curPass} onChange={(e) => setCurPass(e.target.value)} />
+          <hr style={{ border: "1px solid rgba(255,255,255,0.1)", margin: "0.25rem 0" }} />
+          <input className="text-input" placeholder="New User ID"       value={newId}   onChange={(e) => setNewId(e.target.value)} />
+          <input className="text-input" type="password" placeholder="New Password"     value={newPass} onChange={(e) => setNewPass(e.target.value)} />
+          {msg && <p style={{ fontSize: "0.85rem", color: msg.startsWith("✅") ? "#4ade80" : "#f87171" }}>{msg}</p>}
+          <div className="form-btns">
+            <button type="submit" className="btn btn-primary btn-sm" disabled={loading}>{loading ? "Updating…" : "Update"}</button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>Close</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────
+   MAIN COMPONENT
+───────────────────────────────────────── */
 export default function Portfolio() {
+
   /* ── Welcome toast ── */
   const [showToast, setShowToast] = useState(true);
   useEffect(() => { const t = setTimeout(() => setShowToast(false), 4000); return () => clearTimeout(t); }, []);
 
-  /* ── Auth gate ── */
+  /* ── Admin session (stays logged in for the tab session) ── */
+  const [isAdmin,   setIsAdmin]   = useState(false);
   const [authModal, setAuthModal] = useState(null);
-  const requireAuth = (action) => setAuthModal({ onConfirm: () => { setAuthModal(null); action(); } });
+  const requireAuth = (action) => {
+    if (isAdmin) { action(); return; }
+    setAuthModal({ onConfirm: () => { setAuthModal(null); setIsAdmin(true); action(); } });
+  };
   const closeAuth = () => setAuthModal(null);
 
   /* ── DB sync ── */
   const [dbLoaded, setDbLoaded] = useState(false);
-
   const saveToDb = (patch) => {
     fetch("/api/portfolio", {
       method: "POST",
@@ -93,38 +221,38 @@ export default function Portfolio() {
     }).catch(() => {});
   };
 
+  /* ── Hero (all text/urls configurable) ── */
+  const [hero,         setHero]         = useState(DEFAULT_HERO);
+  const [editingHero,  setEditingHero]  = useState(false);
+  const [showCreds,    setShowCreds]    = useState(false);
+
+  const saveHero = (form) => {
+    setHero(form);
+    saveToDb({ hero: form });
+    setEditingHero(false);
+  };
+
   /* ── About points ── */
-  const DEFAULT_ABOUT = [
-    { icon: "🔭", text: "I'm skilled in <strong>React.js</strong> and <strong>Flask</strong> web projects" },
-    { icon: "🌱", text: "I'm skilled in <strong>MERN Stack</strong>, <strong>WordPress</strong>" },
-    { icon: "👯", text: "I'm looking to collaborate on <strong>Everything</strong>" },
-    { icon: "💬", text: "Ask me about <strong>AWS, Python, Java, C++, HTML, CSS, Flask, React.js, Node.js, Express.js</strong>" },
-    { icon: "📫", text: 'How to reach me: <a href="mailto:bankebihari1206@gmail.com" class="readme-email">bankebihari1206@gmail.com</a>' },
-    { icon: "⚡", text: "Fun fact: I think I am Funny 😄" },
-  ];
-  const [aboutPoints, setAboutPoints] = useState(DEFAULT_ABOUT);
-  const [showAboutInput, setShowAboutInput] = useState(false);
-  const [newPoint, setNewPoint] = useState({ icon: "✨", text: "" });
+  const [aboutPoints,     setAboutPoints]     = useState(DEFAULT_ABOUT);
+  const [showAboutInput,  setShowAboutInput]  = useState(false);
+  const [newPoint,        setNewPoint]        = useState({ icon: "✨", text: "" });
 
   const deleteAboutPoint = (i) => {
     const updated = aboutPoints.filter((_, idx) => idx !== i);
-    setAboutPoints(updated);
-    saveToDb({ aboutPoints: updated });
+    setAboutPoints(updated); saveToDb({ aboutPoints: updated });
   };
   const saveAboutPoint = () => {
     if (!newPoint.text.trim()) return;
     const updated = [...aboutPoints, newPoint];
-    setAboutPoints(updated);
-    saveToDb({ aboutPoints: updated });
-    setShowAboutInput(false);
-    setNewPoint({ icon: "✨", text: "" });
+    setAboutPoints(updated); saveToDb({ aboutPoints: updated });
+    setShowAboutInput(false); setNewPoint({ icon: "✨", text: "" });
   };
 
   /* ── Skills ── */
-  const [skills, setSkills] = useState(DEFAULT_SKILLS);
-  const [newSkill, setNewSkill] = useState("");
-  const [showSkillInput, setShowSkillInput] = useState(false);
-  const [skillError, setSkillError] = useState("");
+  const [skills,          setSkills]          = useState(DEFAULT_SKILLS);
+  const [newSkill,        setNewSkill]        = useState("");
+  const [showSkillInput,  setShowSkillInput]  = useState(false);
+  const [skillError,      setSkillError]      = useState("");
   const skillInputRef = useRef(null);
 
   const addSkill = () => {
@@ -135,35 +263,29 @@ export default function Portfolio() {
     setSkills(updated); setNewSkill(""); setSkillError(""); setShowSkillInput(false);
     saveToDb({ skills: updated });
   };
-  const deleteSkill = (i) => requireAuth(() => {
-    const updated = skills.filter((_, idx) => idx !== i);
-    setSkills(updated); saveToDb({ skills: updated });
-  });
+  const deleteSkill  = (i)  => requireAuth(() => { const updated = skills.filter((_, idx) => idx !== i); setSkills(updated); saveToDb({ skills: updated }); });
   const openSkillInput = () => requireAuth(() => { setShowSkillInput(true); setSkillError(""); setTimeout(() => skillInputRef.current?.focus(), 50); });
   const cancelSkillInput = () => { setShowSkillInput(false); setNewSkill(""); setSkillError(""); };
 
   /* ── Experience ── */
   const [experiences, setExperiences] = useState(DEFAULT_EXPERIENCES);
-  const [expForm, setExpForm] = useState(null);
+  const [expForm,     setExpForm]     = useState(null);
 
   const saveExp = () => {
     const { role, company, duration } = expForm.data;
     if (!role.trim() || !company.trim() || !duration.trim()) return;
-    let updated;
-    if (expForm.mode === "add") { updated = [...experiences, { ...expForm.data, id: Date.now() }]; }
-    else { updated = experiences.map((e) => e.id === expForm.id ? { ...expForm.data, id: expForm.id } : e); }
+    const updated = expForm.mode === "add"
+      ? [...experiences, { ...expForm.data, id: Date.now() }]
+      : experiences.map((e) => e.id === expForm.id ? { ...expForm.data, id: expForm.id } : e);
     setExperiences(updated); setExpForm(null); saveToDb({ experiences: updated });
   };
-  const deleteExp = (id) => requireAuth(() => {
-    const updated = experiences.filter((e) => e.id !== id);
-    setExperiences(updated); saveToDb({ experiences: updated });
-  });
-  const editExp = (exp) => requireAuth(() => setExpForm({ mode: "edit", id: exp.id, data: { ...exp } }));
-  const addExp = () => requireAuth(() => setExpForm({ mode: "add", data: { ...EMPTY_EXP } }));
+  const deleteExp = (id) => requireAuth(() => { const updated = experiences.filter((e) => e.id !== id); setExperiences(updated); saveToDb({ experiences: updated }); });
+  const editExp   = (exp) => requireAuth(() => setExpForm({ mode: "edit", id: exp.id, data: { ...exp } }));
+  const addExp    = ()    => requireAuth(() => setExpForm({ mode: "add",  data: { ...EMPTY_EXP } }));
 
   /* ── Projects ── */
-  const [projects, setProjects] = useState(DEFAULT_PROJECTS);
-  const [projForm, setProjForm] = useState(null);
+  const [projects,  setProjects]  = useState(DEFAULT_PROJECTS);
+  const [projForm,  setProjForm]  = useState(null);
   const dragItem = useRef(null);
   const dragOver = useRef(null);
 
@@ -173,45 +295,38 @@ export default function Portfolio() {
     const tags = typeof projForm.data.tags === "string"
       ? projForm.data.tags.split(",").map((t) => t.trim()).filter(Boolean)
       : projForm.data.tags;
-    const data = { ...projForm.data, tags };
-    let updated;
-    if (projForm.mode === "add") { updated = [...projects, { ...data, id: Date.now() }]; }
-    else { updated = projects.map((p) => p.id === projForm.id ? { ...data, id: projForm.id } : p); }
+    const data    = { ...projForm.data, tags };
+    const updated = projForm.mode === "add"
+      ? [...projects, { ...data, id: Date.now() }]
+      : projects.map((p) => p.id === projForm.id ? { ...data, id: projForm.id } : p);
     setProjects(updated); setProjForm(null); saveToDb({ projects: updated });
   };
-  const deleteProj = (id) => requireAuth(() => {
-    const updated = projects.filter((p) => p.id !== id);
-    setProjects(updated); saveToDb({ projects: updated });
-  });
-  const editProj = (proj) => requireAuth(() => setProjForm({ mode: "edit", id: proj.id, data: { ...proj, tags: proj.tags.join(", ") } }));
-  const addProj = () => requireAuth(() => setProjForm({ mode: "add", data: { ...EMPTY_PROJ } }));
+  const deleteProj = (id)   => requireAuth(() => { const updated = projects.filter((p) => p.id !== id); setProjects(updated); saveToDb({ projects: updated }); });
+  const editProj   = (proj) => requireAuth(() => setProjForm({ mode: "edit", id: proj.id, data: { ...proj, tags: proj.tags.join(", ") } }));
+  const addProj    = ()     => requireAuth(() => setProjForm({ mode: "add",  data: { ...EMPTY_PROJ } }));
 
   const onDragStart = (i) => { dragItem.current = i; };
   const onDragEnter = (i) => { dragOver.current = i; };
-  const onDragEnd = () => {
-    const from = dragItem.current; const to = dragOver.current;
+  const onDragEnd   = ()  => {
+    const from = dragItem.current, to = dragOver.current;
     if (from === null || to === null || from === to) { dragItem.current = null; dragOver.current = null; return; }
     const reordered = [...projects];
-    const [moved] = reordered.splice(from, 1);
+    const [moved]   = reordered.splice(from, 1);
     reordered.splice(to, 0, moved);
-    setProjects(reordered);
-    saveToDb({ projects: reordered });
+    setProjects(reordered); saveToDb({ projects: reordered });
     dragItem.current = null; dragOver.current = null;
   };
 
-  /* ── Resume (Vercel Blob — public for all visitors) ── */
-  const [resume, setResume] = useState(() => {
-    try { const r = localStorage.getItem("pf_resume_blob"); return r ? JSON.parse(r) : null; } catch { return null; }
-  });
-  const [uploading, setUploading] = useState(false);
+  /* ── Resume ── */
+  const [resume,      setResume]      = useState(null);
+  const [uploading,   setUploading]   = useState(false);
   const [uploadError, setUploadError] = useState("");
   const fileInputRef = useRef(null);
 
-  // Fetch latest resume URL from server on mount
   useEffect(() => {
     fetch("/api/resume-meta")
       .then((r) => r.ok ? r.json() : null)
-      .then((d) => { if (d?.url) { setResume(d); localStorage.setItem("pf_resume_blob", JSON.stringify(d)); } })
+      .then((d) => { if (d?.url) setResume(d); })
       .catch(() => {});
   }, []);
 
@@ -227,41 +342,29 @@ export default function Portfolio() {
       });
       if (!res.ok) throw new Error("Upload failed");
       const data = await res.json();
-      const meta = {
-        name: file.name,
-        url: data.url,
+      setResume({
+        name: file.name, url: data.url,
         size: file.size > 1024 * 1024 ? (file.size / (1024 * 1024)).toFixed(2) + " MB" : (file.size / 1024).toFixed(1) + " KB",
         uploadedAt: new Date().toLocaleDateString(),
-      };
-      setResume(meta);
-      localStorage.setItem("pf_resume_blob", JSON.stringify(meta));
-    } catch {
-      setUploadError("Upload failed. Please try again.");
-    }
-    setUploading(false);
-    e.target.value = "";
+      });
+    } catch { setUploadError("Upload failed. Please try again."); }
+    setUploading(false); e.target.value = "";
   };
 
   const downloadResume = () => {
     const a = document.createElement("a");
-    a.href = "/api/resume-file";
-    a.download = resume.name || "resume.pdf";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    a.href = "/api/resume-file"; a.download = resume?.name || "resume.pdf";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
   };
   const deleteResume = () => requireAuth(async () => {
-    if (resume?.url) {
-      await fetch("/api/upload-resume", { method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify({ url: resume.url }) }).catch(() => {});
-    }
+    await fetch("/api/upload-resume", { method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify({ url: resume?.url }) }).catch(() => {});
     setResume(null);
-    localStorage.removeItem("pf_resume_blob");
   });
 
-  /* ── Phone (editable) ── */
-  const [phone, setPhone] = useState("+91 00000 00000");
+  /* ── Phone ── */
+  const [phone,        setPhone]        = useState("+91 00000 00000");
   const [editingPhone, setEditingPhone] = useState(false);
-  const [phoneInput, setPhoneInput] = useState("");
+  const [phoneInput,   setPhoneInput]   = useState("");
   const phoneRef = useRef(null);
 
   const savePhone = () => {
@@ -269,65 +372,69 @@ export default function Portfolio() {
     if (v) { setPhone(v); saveToDb({ phone: v }); }
     setEditingPhone(false);
   };
+  const startEditPhone = () => requireAuth(() => { setPhoneInput(phone); setEditingPhone(true); setTimeout(() => phoneRef.current?.focus(), 50); });
 
-  /* ── Load all data from MongoDB on mount ── */
+  /* ── Load ALL data from MongoDB on mount ── */
   useEffect(() => {
     fetch("/api/portfolio")
       .then((r) => r.ok ? r.json() : null)
       .then((d) => {
         if (d) {
-          if (d.skills?.length)      setSkills(d.skills);
+          if (d.hero)              setHero((prev) => ({ ...prev, ...d.hero }));
+          if (d.skills?.length)    setSkills(d.skills);
           if (d.experiences?.length) setExperiences(d.experiences);
-          if (d.projects?.length)    setProjects(d.projects);
+          if (d.projects?.length)  setProjects(d.projects);
           if (d.aboutPoints?.length) setAboutPoints(d.aboutPoints);
-          if (d.phone)               setPhone(d.phone);
+          if (d.phone)             setPhone(d.phone);
         }
         setDbLoaded(true);
       })
       .catch(() => setDbLoaded(true));
   }, []);
 
-  const startEditPhone = () => requireAuth(() => {
-    setPhoneInput(phone); setEditingPhone(true);
-    setTimeout(() => phoneRef.current?.focus(), 50);
-  });
-
   /* ── Contact form ── */
-  const [contactForm, setContactForm] = useState({ name: "", email: "", subject: "", message: "" });
-  const [contactSent, setContactSent] = useState(false);
+  const [contactForm,    setContactForm]    = useState({ name: "", email: "", subject: "", message: "" });
+  const [contactSent,    setContactSent]    = useState(false);
   const [contactSending, setContactSending] = useState(false);
-  const [contactError, setContactError] = useState("");
+  const [contactError,   setContactError]   = useState("");
 
   const handleContact = async (e) => {
     e.preventDefault();
-    setContactSending(true);
-    setContactError("");
-
+    setContactSending(true); setContactError("");
     try {
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(contactForm),
       });
-
-      if (!res.ok) {
-        throw new Error("Failed to save message");
-      }
-
+      if (!res.ok) throw new Error("Failed");
       setContactForm({ name: "", email: "", subject: "", message: "" });
       setContactSent(true);
+      setTimeout(() => setContactSent(false), 4000);
     } catch {
       setContactError("Message could not be saved. Please try again.");
     } finally {
       setContactSending(false);
     }
-
-    setTimeout(() => setContactSent(false), 4000);
   };
 
+  /* ─────────────────────────────────────────
+     RENDER
+  ───────────────────────────────────────── */
   return (
     <div className="pf">
-      {authModal && <AuthModal onConfirm={authModal.onConfirm} onCancel={closeAuth} />}
+      {/* Modals */}
+      {authModal     && <AuthModal        onConfirm={authModal.onConfirm} onCancel={closeAuth} />}
+      {editingHero   && <HeroEditModal    hero={hero}  onSave={saveHero}  onCancel={() => setEditingHero(false)} />}
+      {showCreds     && <CredentialsModal onClose={() => setShowCreds(false)} />}
+
+      {/* Admin toolbar (shown once logged in) */}
+      {isAdmin && (
+        <div style={{ position: "fixed", bottom: "1.5rem", right: "1.5rem", zIndex: 9999, display: "flex", flexDirection: "column", gap: "0.5rem", alignItems: "flex-end" }}>
+          <button className="btn btn-primary btn-sm" onClick={() => setEditingHero(true)}  style={{ fontSize: "0.8rem" }}>✎ Edit Site</button>
+          <button className="btn btn-ghost btn-sm"   onClick={() => setShowCreds(true)}    style={{ fontSize: "0.8rem" }}>🔐 Change Login</button>
+        </div>
+      )}
 
       {/* ── WELCOME TOAST ── */}
       {showToast && (
@@ -335,7 +442,7 @@ export default function Portfolio() {
           <span className="toast-emoji">👋</span>
           <div>
             <p className="toast-title">Welcome!</p>
-            <p className="toast-sub">Thanks for visiting Banke&apos;s portfolio</p>
+            <p className="toast-sub">Thanks for visiting {hero.name}&apos;s portfolio</p>
           </div>
           <button className="toast-close" onClick={() => setShowToast(false)}>✕</button>
         </div>
@@ -350,30 +457,28 @@ export default function Portfolio() {
         <div className="hero-inner">
           {/* LEFT */}
           <div className="hero-left">
-            <div className="hero-badge"><span className="badge-dot" />Available for opportunities</div>
-            <h1 className="hero-name">Hi, I&apos;m <span className="grad-text">Banke</span></h1>
-            <h2 className="hero-role">Full Stack Developer</h2>
-            <p className="hero-bio">I craft beautiful, high-performance web experiences with modern technologies. Passionate about clean code, intuitive design, and building things that matter.</p>
+            <div className="hero-badge"><span className="badge-dot" />{hero.badge}</div>
+            <h1 className="hero-name">Hi, I&apos;m <span className="grad-text">{hero.name}</span></h1>
+            <h2 className="hero-role">{hero.role}</h2>
+            <p className="hero-bio">{hero.bio}</p>
             <div className="hero-btns">
               <a href="#projects" className="btn btn-primary">View My Projects</a>
-              <a href="#contact" className="btn btn-outline">Contact Me</a>
-              {resume && (
-                <button className="btn btn-ghost" onClick={downloadResume}>⬇ Resume</button>
+              <a href="#contact"  className="btn btn-outline">Contact Me</a>
+              {resume && <button className="btn btn-ghost" onClick={downloadResume}>⬇ Resume</button>}
+              {!isAdmin && (
+                <button className="btn btn-ghost btn-sm" style={{ opacity: 0.4, fontSize: "0.75rem" }}
+                  onClick={() => requireAuth(() => {})}>🔒 Admin</button>
               )}
             </div>
             <div className="hero-socials">
-              <a href="https://github.com/bankebihari" target="_blank" rel="noreferrer" className="social-chip">GitHub</a>
-              <a href="https://www.linkedin.com/in/bankebihari01/" target="_blank" rel="noreferrer" className="social-chip">LinkedIn</a>
+              <a href={hero.githubUrl}   target="_blank" rel="noreferrer" className="social-chip">GitHub</a>
+              <a href={hero.linkedinUrl} target="_blank" rel="noreferrer" className="social-chip">LinkedIn</a>
             </div>
           </div>
-          {/* RIGHT — coding GIF */}
+          {/* RIGHT */}
           <div className="hero-right">
             <div className="hero-gif-wrap">
-              <img
-                src="https://cdn.dribbble.com/users/926537/screenshots/4502924/python-2.gif"
-                alt="Coding animation"
-                className="hero-gif"
-              />
+              <img src={hero.gifUrl} alt="Coding animation" className="hero-gif" />
               <div className="hero-gif-glow" />
             </div>
           </div>
@@ -398,8 +503,8 @@ export default function Portfolio() {
                     <div className="exp-company">{exp.company} <span className="exp-duration">· {exp.duration}</span></div>
                   </div>
                   <div className="exp-actions">
-                    <button className="icon-btn" title="Edit (requires login)" onClick={() => editExp(exp)}>✎</button>
-                    <button className="icon-btn icon-btn--danger" title="Delete (requires login)" onClick={() => deleteExp(exp.id)}>✕</button>
+                    <button className="icon-btn" title="Edit" onClick={() => editExp(exp)}>✎</button>
+                    <button className="icon-btn icon-btn--danger" title="Delete" onClick={() => deleteExp(exp.id)}>✕</button>
                   </div>
                 </div>
                 {exp.description && <p className="exp-desc">{exp.description}</p>}
@@ -410,14 +515,14 @@ export default function Portfolio() {
             <div className="form-card glass">
               <h3 className="form-title">{expForm.mode === "add" ? "Add Experience" : "Edit Experience"}</h3>
               <div className="form-grid">
-                <input className="text-input" placeholder="Job Title *" value={expForm.data.role} onChange={(e) => setExpForm({ ...expForm, data: { ...expForm.data, role: e.target.value } })} />
-                <input className="text-input" placeholder="Company *" value={expForm.data.company} onChange={(e) => setExpForm({ ...expForm, data: { ...expForm.data, company: e.target.value } })} />
-                <input className="text-input" placeholder="Duration e.g. Jan 2024 – Present *" value={expForm.data.duration} onChange={(e) => setExpForm({ ...expForm, data: { ...expForm.data, duration: e.target.value } })} />
+                <input className="text-input" placeholder="Job Title *"                         value={expForm.data.role}        onChange={(e) => setExpForm({ ...expForm, data: { ...expForm.data, role: e.target.value } })} />
+                <input className="text-input" placeholder="Company *"                           value={expForm.data.company}     onChange={(e) => setExpForm({ ...expForm, data: { ...expForm.data, company: e.target.value } })} />
+                <input className="text-input" placeholder="Duration e.g. Jan 2024 – Present *" value={expForm.data.duration}    onChange={(e) => setExpForm({ ...expForm, data: { ...expForm.data, duration: e.target.value } })} />
                 <textarea className="text-input text-area" placeholder="Description (optional)" value={expForm.data.description} onChange={(e) => setExpForm({ ...expForm, data: { ...expForm.data, description: e.target.value } })} />
               </div>
               <div className="form-btns">
                 <button className="btn btn-primary btn-sm" onClick={saveExp}>Save</button>
-                <button className="btn btn-ghost btn-sm" onClick={() => setExpForm(null)}>Cancel</button>
+                <button className="btn btn-ghost btn-sm"   onClick={() => setExpForm(null)}>Cancel</button>
               </div>
             </div>
           ) : (
@@ -445,8 +550,8 @@ export default function Portfolio() {
                     <div className="proj-drag-handle" title="Drag to reorder">⠿</div>
                     <h3 className="proj-name">{proj.name}</h3>
                     <div className="exp-actions">
-                      <button className="icon-btn" title="Edit (requires login)" onClick={() => editProj(proj)}>✎</button>
-                      <button className="icon-btn icon-btn--danger" title="Delete (requires login)" onClick={() => deleteProj(proj.id)}>✕</button>
+                      <button className="icon-btn" title="Edit" onClick={() => editProj(proj)}>✎</button>
+                      <button className="icon-btn icon-btn--danger" title="Delete" onClick={() => deleteProj(proj.id)}>✕</button>
                     </div>
                   </div>
                   <p className="proj-desc">{proj.description}</p>
@@ -465,14 +570,14 @@ export default function Portfolio() {
             <div className="form-card glass">
               <h3 className="form-title">{projForm.mode === "add" ? "Add Project" : "Edit Project"}</h3>
               <div className="form-grid">
-                <input className="text-input" placeholder="Project Name *" value={projForm.data.name} onChange={(e) => setProjForm({ ...projForm, data: { ...projForm.data, name: e.target.value } })} />
-                <input className="text-input" placeholder="Project Link (URL)" value={projForm.data.link} onChange={(e) => setProjForm({ ...projForm, data: { ...projForm.data, link: e.target.value } })} />
-                <textarea className="text-input text-area" placeholder="Description *" value={projForm.data.description} onChange={(e) => setProjForm({ ...projForm, data: { ...projForm.data, description: e.target.value } })} />
-                <input className="text-input" placeholder="Tags (comma separated)" value={projForm.data.tags} onChange={(e) => setProjForm({ ...projForm, data: { ...projForm.data, tags: e.target.value } })} />
+                <input    className="text-input"            placeholder="Project Name *"         value={projForm.data.name}        onChange={(e) => setProjForm({ ...projForm, data: { ...projForm.data, name: e.target.value } })} />
+                <input    className="text-input"            placeholder="Project Link (URL)"      value={projForm.data.link}        onChange={(e) => setProjForm({ ...projForm, data: { ...projForm.data, link: e.target.value } })} />
+                <textarea className="text-input text-area" placeholder="Description *"           value={projForm.data.description} onChange={(e) => setProjForm({ ...projForm, data: { ...projForm.data, description: e.target.value } })} />
+                <input    className="text-input"            placeholder="Tags (comma separated)" value={projForm.data.tags}        onChange={(e) => setProjForm({ ...projForm, data: { ...projForm.data, tags: e.target.value } })} />
               </div>
               <div className="form-btns">
                 <button className="btn btn-primary btn-sm" onClick={saveProj}>Save</button>
-                <button className="btn btn-ghost btn-sm" onClick={() => setProjForm(null)}>Cancel</button>
+                <button className="btn btn-ghost btn-sm"   onClick={() => setProjForm(null)}>Cancel</button>
               </div>
             </div>
           ) : (
@@ -495,7 +600,7 @@ export default function Portfolio() {
               {skills.map((skill, i) => (
                 <div key={skill + i} className="skill-tag" style={{ background: SKILL_COLORS[i % SKILL_COLORS.length] }}>
                   <span>{skill}</span>
-                  <button className="skill-del" onClick={() => deleteSkill(i)} title="Remove (requires login)" aria-label={`Remove ${skill}`}>&times;</button>
+                  <button className="skill-del" onClick={() => deleteSkill(i)} title="Remove" aria-label={`Remove ${skill}`}>&times;</button>
                 </div>
               ))}
             </div>
@@ -505,7 +610,7 @@ export default function Portfolio() {
                   value={newSkill} onChange={(e) => { setNewSkill(e.target.value); setSkillError(""); }}
                   onKeyDown={(e) => { if (e.key === "Enter") addSkill(); if (e.key === "Escape") cancelSkillInput(); }} />
                 <button className="btn btn-primary btn-sm" onClick={addSkill}>Add</button>
-                <button className="btn btn-ghost btn-sm" onClick={cancelSkillInput}>Cancel</button>
+                <button className="btn btn-ghost btn-sm"   onClick={cancelSkillInput}>Cancel</button>
               </div>
             )}
             {skillError && <p className="form-error">{skillError}</p>}
@@ -535,7 +640,7 @@ export default function Portfolio() {
                   <p className="resume-ph-sub">{resume.size} · Uploaded {resume.uploadedAt}</p>
                 </div>
                 <div style={{ display: "flex", gap: "0.75rem", marginLeft: "auto" }}>
-                  <button className="btn btn-primary" onClick={downloadResume}>⬇ Download</button>
+                  <button className="btn btn-primary"   onClick={downloadResume}>⬇ Download</button>
                   <button className="btn btn-ghost btn-sm" onClick={() => requireAuth(() => fileInputRef.current?.click())}>🔄 Replace</button>
                   <button className="btn btn-danger btn-sm" onClick={deleteResume}>🗑</button>
                 </div>
@@ -549,7 +654,7 @@ export default function Portfolio() {
                   {uploadError && <p className="form-error">{uploadError}</p>}
                 </div>
                 <button className="btn btn-primary" style={{ marginLeft: "auto" }}
-                  onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+                  onClick={() => requireAuth(() => fileInputRef.current?.click())} disabled={uploading}>
                   {uploading ? <><span className="spinner" /> Uploading…</> : "📤 Upload Resume"}
                 </button>
               </div>
@@ -567,19 +672,19 @@ export default function Portfolio() {
             <p className="sec-sub">Reach out — I&apos;d love to hear from you</p>
           </div>
           <div className="contact-layout">
-            {/* Left — info */}
+            {/* Left — info from DB */}
             <div className="contact-info">
-              <a href="mailto:bankebihari1206@gmail.com" className="contact-card glass">
+              <a href={`mailto:${hero.contactEmail}`} className="contact-card glass">
                 <span className="contact-icon">📧</span>
-                <div><strong>Email</strong><p>bankebihari1206@gmail.com</p></div>
+                <div><strong>Email</strong><p>{hero.contactEmail}</p></div>
               </a>
-              <a href="https://www.linkedin.com/in/bankebihari01/" target="_blank" rel="noreferrer" className="contact-card glass">
+              <a href={hero.linkedinUrl} target="_blank" rel="noreferrer" className="contact-card glass">
                 <span className="contact-icon">💼</span>
-                <div><strong>LinkedIn</strong><p>linkedin.com/in/bankebihari01</p></div>
+                <div><strong>LinkedIn</strong><p>{hero.linkedinUrl.replace("https://", "")}</p></div>
               </a>
-              <a href="https://github.com/bankebihari" target="_blank" rel="noreferrer" className="contact-card glass">
+              <a href={hero.githubUrl} target="_blank" rel="noreferrer" className="contact-card glass">
                 <span className="contact-icon">🐙</span>
-                <div><strong>GitHub</strong><p>github.com/bankebihari</p></div>
+                <div><strong>GitHub</strong><p>{hero.githubUrl.replace("https://", "")}</p></div>
               </a>
             </div>
             {/* Right — form */}
@@ -589,45 +694,41 @@ export default function Portfolio() {
                 <div className="call-us-block">
                   <span className="call-us-label">📞 Call us</span>
                   {editingPhone ? (
-                    <input
-                      ref={phoneRef}
-                      className="phone-input"
-                      value={phoneInput}
+                    <input ref={phoneRef} className="phone-input" value={phoneInput}
                       onChange={(e) => setPhoneInput(e.target.value)}
                       onBlur={savePhone}
-                      onKeyDown={(e) => { if (e.key === "Enter") savePhone(); if (e.key === "Escape") setEditingPhone(false); }}
-                    />
+                      onKeyDown={(e) => { if (e.key === "Enter") savePhone(); if (e.key === "Escape") setEditingPhone(false); }} />
                   ) : (
-                    <span className="call-us-number" onClick={startEditPhone} title="Click to edit (requires login)">
+                    <span className="call-us-number" onClick={startEditPhone} title="Click to edit">
                       {phone} <span className="phone-edit-icon">✎</span>
                     </span>
                   )}
                 </div>
               </div>
               <div className="form-row-2">
-                <input className="text-input" placeholder="Your Name" required value={contactForm.name} onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })} />
+                <input className="text-input" placeholder="Your Name"  required value={contactForm.name}    onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })} />
                 <input className="text-input" type="email" placeholder="Your Email" required value={contactForm.email} onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })} />
               </div>
-              <input className="text-input" placeholder="Subject" value={contactForm.subject} onChange={(e) => setContactForm({ ...contactForm, subject: e.target.value })} />
+              <input    className="text-input"            placeholder="Subject"          value={contactForm.subject}  onChange={(e) => setContactForm({ ...contactForm, subject: e.target.value })} />
               <textarea className="text-input text-area contact-textarea" placeholder="Your message…" required value={contactForm.message} onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })} />
               {contactError && <p className="form-error">{contactError}</p>}
               <button type="submit" className="btn btn-primary" style={{ width: "100%" }}>
-                {contactSending ? "Saving..." : contactSent ? "Message saved" : "📨 Send Message"}
+                {contactSending ? "Saving..." : contactSent ? "✅ Message saved!" : "📨 Send Message"}
               </button>
             </form>
           </div>
         </div>
       </section>
 
+      {/* ── FOOTER ── */}
       <footer className="footer">
         <div className="footer-container">
-          {/* Points row */}
           <div className="footer-points">
             {aboutPoints.map((pt, i) => (
               <div key={i} className="footer-chip glass">
                 <span className="footer-chip-icon">{pt.icon}</span>
                 <span className="footer-chip-text" dangerouslySetInnerHTML={{ __html: pt.text }} />
-                <button className="readme-del footer-chip-del" onClick={() => requireAuth(() => deleteAboutPoint(i))} title="Remove (requires login)">✕</button>
+                <button className="readme-del footer-chip-del" onClick={() => requireAuth(() => deleteAboutPoint(i))} title="Remove">✕</button>
               </div>
             ))}
             {showAboutInput ? (
@@ -635,11 +736,10 @@ export default function Portfolio() {
                 <input className="text-input about-icon-input" placeholder="🔥" maxLength={4}
                   value={newPoint.icon} onChange={(e) => setNewPoint({ ...newPoint, icon: e.target.value })} />
                 <input className="text-input" placeholder="Point text…" style={{ flex: 1, minWidth: 180 }}
-                  value={newPoint.text}
-                  onChange={(e) => setNewPoint({ ...newPoint, text: e.target.value })}
+                  value={newPoint.text} onChange={(e) => setNewPoint({ ...newPoint, text: e.target.value })}
                   onKeyDown={(e) => { if (e.key === "Enter") saveAboutPoint(); if (e.key === "Escape") setShowAboutInput(false); }} />
                 <button className="btn btn-primary btn-sm" onClick={saveAboutPoint}>Add</button>
-                <button className="btn btn-ghost btn-sm" onClick={() => setShowAboutInput(false)}>✕</button>
+                <button className="btn btn-ghost btn-sm"   onClick={() => setShowAboutInput(false)}>✕</button>
               </div>
             ) : (
               <button className="footer-add-btn" onClick={() => requireAuth(() => { setShowAboutInput(true); setNewPoint({ icon: "✨", text: "" }); })}>
@@ -647,10 +747,8 @@ export default function Portfolio() {
               </button>
             )}
           </div>
-
-          {/* Bottom bar */}
           <div className="footer-bar">
-            <p>Designed &amp; built with <span className="heart">♥</span> by <strong>Banke Bihari</strong></p>
+            <p dangerouslySetInnerHTML={{ __html: hero.footerText.replace("♥", '<span class="heart">♥</span>') }} />
           </div>
         </div>
       </footer>
