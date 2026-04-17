@@ -85,7 +85,7 @@
 
 /* Sections */
 .section {
-  padding: 110px 0;
+  padding: 70px 0;
 }
 
 .container {
@@ -96,7 +96,7 @@
 
 .sec-header {
   text-align: center;
-  margin-bottom: 3.5rem;
+  margin-bottom: 2.5rem;
 }
 
 .sec-badge {
@@ -1404,7 +1404,7 @@
 }
 
 @media (max-width: 768px) {
-  .section { padding: 72px 0; }
+  .section { padding: 56px 0; }
   .hero { padding: 100px 1.5rem 4rem; }
   .skills-box, .resume-box { padding: 1.5rem; }
   .resume-uploaded { flex-direction: column; }
@@ -1422,7 +1422,7 @@
 }
 
 @media (max-width: 480px) {
-  .section { padding: 60px 0; }
+  .section { padding: 48px 0; }
   .hero { padding: 90px 1rem 3rem; }
   .hero-btns { flex-direction: column; align-items: stretch; }
   .hero-btns .btn { width: 100%; }

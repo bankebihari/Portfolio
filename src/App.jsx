@@ -4,7 +4,7 @@ import Portfolio from "./pages/Portfolio";
 
 export default function App() {
   return (
-    <BrowserRouter basename={import.meta.env.PROD ? "/Portfolio" : ""}>
+    <BrowserRouter basename="/Portfolio">
       <Navbar />
       <Routes>
         <Route path="/" element={<Portfolio />} />
