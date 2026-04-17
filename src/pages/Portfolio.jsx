@@ -78,9 +78,20 @@ export default function Portfolio() {
   useEffect(() => { const t = setTimeout(() => setShowToast(false), 4000); return () => clearTimeout(t); }, []);
 
   /* ── Auth gate ── */
-  const [authModal, setAuthModal] = useState(null); // null | { onConfirm }
+  const [authModal, setAuthModal] = useState(null);
   const requireAuth = (action) => setAuthModal({ onConfirm: () => { setAuthModal(null); action(); } });
   const closeAuth = () => setAuthModal(null);
+
+  /* ── DB sync ── */
+  const [dbLoaded, setDbLoaded] = useState(false);
+
+  const saveToDb = (patch) => {
+    fetch("/api/portfolio", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(patch),
+    }).catch(() => {});
+  };
 
   /* ── About points ── */
   const DEFAULT_ABOUT = [
@@ -91,71 +102,70 @@ export default function Portfolio() {
     { icon: "📫", text: 'How to reach me: <a href="mailto:bankebihari1206@gmail.com" class="readme-email">bankebihari1206@gmail.com</a>' },
     { icon: "⚡", text: "Fun fact: I think I am Funny 😄" },
   ];
-  const [aboutPoints, setAboutPoints] = useState(() => {
-    try { const a = localStorage.getItem("pf_about_v1"); return a ? JSON.parse(a) : DEFAULT_ABOUT; } catch { return DEFAULT_ABOUT; }
-  });
+  const [aboutPoints, setAboutPoints] = useState(DEFAULT_ABOUT);
   const [showAboutInput, setShowAboutInput] = useState(false);
   const [newPoint, setNewPoint] = useState({ icon: "✨", text: "" });
 
-  useEffect(() => { localStorage.setItem("pf_about_v1", JSON.stringify(aboutPoints)); }, [aboutPoints]);
-
-  const deleteAboutPoint = (i) => setAboutPoints(aboutPoints.filter((_, idx) => idx !== i));
+  const deleteAboutPoint = (i) => {
+    const updated = aboutPoints.filter((_, idx) => idx !== i);
+    setAboutPoints(updated);
+    saveToDb({ aboutPoints: updated });
+  };
   const saveAboutPoint = () => {
     if (!newPoint.text.trim()) return;
-    setAboutPoints([...aboutPoints, newPoint]);
+    const updated = [...aboutPoints, newPoint];
+    setAboutPoints(updated);
+    saveToDb({ aboutPoints: updated });
     setShowAboutInput(false);
     setNewPoint({ icon: "✨", text: "" });
   };
 
   /* ── Skills ── */
-  const [skills, setSkills] = useState(() => {
-    try { const s = localStorage.getItem("pf_skills_v2"); return s ? JSON.parse(s) : DEFAULT_SKILLS; } catch { return DEFAULT_SKILLS; }
-  });
+  const [skills, setSkills] = useState(DEFAULT_SKILLS);
   const [newSkill, setNewSkill] = useState("");
   const [showSkillInput, setShowSkillInput] = useState(false);
   const [skillError, setSkillError] = useState("");
   const skillInputRef = useRef(null);
 
-  useEffect(() => { localStorage.setItem("pf_skills_v2", JSON.stringify(skills)); }, [skills]);
-
   const addSkill = () => {
     const v = newSkill.trim();
     if (!v) { setSkillError("Please enter a skill name."); return; }
     if (skills.some((s) => s.toLowerCase() === v.toLowerCase())) { setSkillError("Skill already exists."); return; }
-    setSkills([...skills, v]); setNewSkill(""); setSkillError(""); setShowSkillInput(false);
+    const updated = [...skills, v];
+    setSkills(updated); setNewSkill(""); setSkillError(""); setShowSkillInput(false);
+    saveToDb({ skills: updated });
   };
-  const deleteSkill = (i) => requireAuth(() => setSkills(skills.filter((_, idx) => idx !== i)));
+  const deleteSkill = (i) => requireAuth(() => {
+    const updated = skills.filter((_, idx) => idx !== i);
+    setSkills(updated); saveToDb({ skills: updated });
+  });
   const openSkillInput = () => requireAuth(() => { setShowSkillInput(true); setSkillError(""); setTimeout(() => skillInputRef.current?.focus(), 50); });
   const cancelSkillInput = () => { setShowSkillInput(false); setNewSkill(""); setSkillError(""); };
 
   /* ── Experience ── */
-  const [experiences, setExperiences] = useState(() => {
-    try { const e = localStorage.getItem("pf_exp_v1"); return e ? JSON.parse(e) : DEFAULT_EXPERIENCES; } catch { return DEFAULT_EXPERIENCES; }
-  });
+  const [experiences, setExperiences] = useState(DEFAULT_EXPERIENCES);
   const [expForm, setExpForm] = useState(null);
-
-  useEffect(() => { localStorage.setItem("pf_exp_v1", JSON.stringify(experiences)); }, [experiences]);
 
   const saveExp = () => {
     const { role, company, duration } = expForm.data;
     if (!role.trim() || !company.trim() || !duration.trim()) return;
-    if (expForm.mode === "add") { setExperiences([...experiences, { ...expForm.data, id: Date.now() }]); }
-    else { setExperiences(experiences.map((e) => e.id === expForm.id ? { ...expForm.data, id: expForm.id } : e)); }
-    setExpForm(null);
+    let updated;
+    if (expForm.mode === "add") { updated = [...experiences, { ...expForm.data, id: Date.now() }]; }
+    else { updated = experiences.map((e) => e.id === expForm.id ? { ...expForm.data, id: expForm.id } : e); }
+    setExperiences(updated); setExpForm(null); saveToDb({ experiences: updated });
   };
-  const deleteExp = (id) => requireAuth(() => setExperiences(experiences.filter((e) => e.id !== id)));
+  const deleteExp = (id) => requireAuth(() => {
+    const updated = experiences.filter((e) => e.id !== id);
+    setExperiences(updated); saveToDb({ experiences: updated });
+  });
   const editExp = (exp) => requireAuth(() => setExpForm({ mode: "edit", id: exp.id, data: { ...exp } }));
   const addExp = () => requireAuth(() => setExpForm({ mode: "add", data: { ...EMPTY_EXP } }));
 
   /* ── Projects ── */
-  const [projects, setProjects] = useState(() => {
-    try { const p = localStorage.getItem("pf_proj_v2"); return p ? JSON.parse(p) : DEFAULT_PROJECTS; } catch { return DEFAULT_PROJECTS; }
-  });
+  const [projects, setProjects] = useState(DEFAULT_PROJECTS);
   const [projForm, setProjForm] = useState(null);
   const dragItem = useRef(null);
   const dragOver = useRef(null);
-
-  useEffect(() => { localStorage.setItem("pf_proj_v2", JSON.stringify(projects)); }, [projects]);
 
   const saveProj = () => {
     const { name: n, description } = projForm.data;
@@ -164,11 +174,15 @@ export default function Portfolio() {
       ? projForm.data.tags.split(",").map((t) => t.trim()).filter(Boolean)
       : projForm.data.tags;
     const data = { ...projForm.data, tags };
-    if (projForm.mode === "add") { setProjects([...projects, { ...data, id: Date.now() }]); }
-    else { setProjects(projects.map((p) => p.id === projForm.id ? { ...data, id: projForm.id } : p)); }
-    setProjForm(null);
+    let updated;
+    if (projForm.mode === "add") { updated = [...projects, { ...data, id: Date.now() }]; }
+    else { updated = projects.map((p) => p.id === projForm.id ? { ...data, id: projForm.id } : p); }
+    setProjects(updated); setProjForm(null); saveToDb({ projects: updated });
   };
-  const deleteProj = (id) => requireAuth(() => setProjects(projects.filter((p) => p.id !== id)));
+  const deleteProj = (id) => requireAuth(() => {
+    const updated = projects.filter((p) => p.id !== id);
+    setProjects(updated); saveToDb({ projects: updated });
+  });
   const editProj = (proj) => requireAuth(() => setProjForm({ mode: "edit", id: proj.id, data: { ...proj, tags: proj.tags.join(", ") } }));
   const addProj = () => requireAuth(() => setProjForm({ mode: "add", data: { ...EMPTY_PROJ } }));
 
@@ -181,6 +195,7 @@ export default function Portfolio() {
     const [moved] = reordered.splice(from, 1);
     reordered.splice(to, 0, moved);
     setProjects(reordered);
+    saveToDb({ projects: reordered });
     dragItem.current = null; dragOver.current = null;
   };
 
@@ -237,16 +252,33 @@ export default function Portfolio() {
   });
 
   /* ── Phone (editable) ── */
-  const [phone, setPhone] = useState(() => localStorage.getItem("pf_phone") || "+91 00000 00000");
+  const [phone, setPhone] = useState("+91 00000 00000");
   const [editingPhone, setEditingPhone] = useState(false);
   const [phoneInput, setPhoneInput] = useState("");
   const phoneRef = useRef(null);
 
   const savePhone = () => {
     const v = phoneInput.trim();
-    if (v) { setPhone(v); localStorage.setItem("pf_phone", v); }
+    if (v) { setPhone(v); saveToDb({ phone: v }); }
     setEditingPhone(false);
   };
+
+  /* ── Load all data from MongoDB on mount ── */
+  useEffect(() => {
+    fetch("/api/portfolio")
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => {
+        if (d) {
+          if (d.skills?.length)      setSkills(d.skills);
+          if (d.experiences?.length) setExperiences(d.experiences);
+          if (d.projects?.length)    setProjects(d.projects);
+          if (d.aboutPoints?.length) setAboutPoints(d.aboutPoints);
+          if (d.phone)               setPhone(d.phone);
+        }
+        setDbLoaded(true);
+      })
+      .catch(() => setDbLoaded(true));
+  }, []);
 
   const startEditPhone = () => requireAuth(() => {
     setPhoneInput(phone); setEditingPhone(true);
