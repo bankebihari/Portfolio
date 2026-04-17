@@ -295,14 +295,33 @@ export default function Portfolio() {
   /* ── Contact form ── */
   const [contactForm, setContactForm] = useState({ name: "", email: "", subject: "", message: "" });
   const [contactSent, setContactSent] = useState(false);
+  const [contactSending, setContactSending] = useState(false);
+  const [contactError, setContactError] = useState("");
 
-  const handleContact = (e) => {
+  const handleContact = async (e) => {
     e.preventDefault();
-    const { name: cn, email, subject, message } = contactForm;
-    const body = encodeURIComponent(`Name: ${cn}\nEmail: ${email}\n\n${message}`);
-    const sub = encodeURIComponent(subject || `Portfolio contact from ${cn}`);
-    window.location.href = `mailto:bankebihari1206@gmail.com?subject=${sub}&body=${body}`;
-    setContactSent(true);
+    setContactSending(true);
+    setContactError("");
+
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(contactForm),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to save message");
+      }
+
+      setContactForm({ name: "", email: "", subject: "", message: "" });
+      setContactSent(true);
+    } catch {
+      setContactError("Message could not be saved. Please try again.");
+    } finally {
+      setContactSending(false);
+    }
+
     setTimeout(() => setContactSent(false), 4000);
   };
 
@@ -591,8 +610,9 @@ export default function Portfolio() {
               </div>
               <input className="text-input" placeholder="Subject" value={contactForm.subject} onChange={(e) => setContactForm({ ...contactForm, subject: e.target.value })} />
               <textarea className="text-input text-area contact-textarea" placeholder="Your message…" required value={contactForm.message} onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })} />
+              {contactError && <p className="form-error">{contactError}</p>}
               <button type="submit" className="btn btn-primary" style={{ width: "100%" }}>
-                {contactSent ? "✓ Opening your mail client…" : "📨 Send Message"}
+                {contactSending ? "Saving..." : contactSent ? "Message saved" : "📨 Send Message"}
               </button>
             </form>
           </div>
