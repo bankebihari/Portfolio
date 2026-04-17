@@ -1,23 +1,41 @@
-import { list } from "@vercel/blob";
+import { MongoClient } from "mongodb";
+
+const uri = process.env.MONGODB_URI;
+const DB_NAME = "portfolio";
+const COLLECTION_NAME = "resumeFiles";
+const RESUME_ID = "latest";
+
+let cachedClient = null;
+
+async function getDb() {
+  if (cachedClient) return cachedClient.db(DB_NAME);
+  const client = new MongoClient(uri);
+  await client.connect();
+  cachedClient = client;
+  return client.db(DB_NAME);
+}
+
+function formatFileSize(bytes) {
+  return bytes > 1024 * 1024
+    ? `${(bytes / (1024 * 1024)).toFixed(2)} MB`
+    : `${(bytes / 1024).toFixed(1)} KB`;
+}
 
 export default async function handler(req, res) {
   try {
-    const { blobs } = await list({
-      prefix: "resume/",
-      token: process.env.BLOB_READ_WRITE_TOKEN,
-    });
+    const db = await getDb();
+    const doc = await db.collection(COLLECTION_NAME).findOne(
+      { _id: RESUME_ID },
+      { projection: { data: 0 } }
+    );
 
-    if (!blobs.length) return res.status(200).json(null);
-
-    const latest = blobs.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt))[0];
+    if (!doc) return res.status(200).json(null);
 
     return res.status(200).json({
-      url: latest.url,
-      name: latest.pathname.replace("resume/", ""),
-      uploadedAt: new Date(latest.uploadedAt).toLocaleDateString(),
-      size: latest.size > 1024 * 1024
-        ? (latest.size / (1024 * 1024)).toFixed(2) + " MB"
-        : (latest.size / 1024).toFixed(1) + " KB",
+      url: "/api/resume-file",
+      name: doc.name,
+      uploadedAt: new Date(doc.uploadedAt).toLocaleDateString(),
+      size: formatFileSize(doc.size || 0),
     });
   } catch {
     return res.status(200).json(null);

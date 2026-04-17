@@ -29,9 +29,9 @@ export default async function handler(req, res) {
 
     if (req.method === "POST") {
       const body = req.body;
-      await col.replaceOne(
+      await col.updateOne(
         { id: "portfolio" },
-        { ...body, id: "portfolio" },
+        { $set: { ...body, id: "portfolio" } },
         { upsert: true }
       );
       return res.status(200).json({ ok: true });
